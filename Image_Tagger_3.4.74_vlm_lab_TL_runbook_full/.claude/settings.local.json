@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source:*)",
+      "Bash(python scripts/guardian.py:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
