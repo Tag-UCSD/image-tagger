@@ -12,6 +12,7 @@ def _admin_headers():
     return {
         "X-User-Id": "1",
         "X-User-Role": "admin",
+        "X-Auth-Token": "dev_secret_key_change_me",  # Required for privileged roles
     }
 
 

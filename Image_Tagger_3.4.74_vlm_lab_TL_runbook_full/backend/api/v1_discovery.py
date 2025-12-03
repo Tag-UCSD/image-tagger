@@ -115,14 +115,7 @@ def list_attributes(
     """Return the attribute registry for Explorer filters.
 
     We expose all Attribute rows, mapping them into AttributeRead records.
+    Pydantic's from_attributes=True handles the ORM-to-schema conversion.
     """
     attrs = db.query(Attribute).order_by(Attribute.key).all()
-    results: List[AttributeRead] = []
-    for attr in attrs:
-        key = getattr(attr, "key", None)
-        label = getattr(attr, "label", None) or key
-        group = getattr(attr, "group", "default")
-        if key is None:
-            continue
-        results.append(AttributeRead(key=key, label=label, group=group, description=getattr(attr, 'description', None) or getattr(attr, 'notes', None)))
-    return results
+    return [AttributeRead.model_validate(attr) for attr in attrs]
