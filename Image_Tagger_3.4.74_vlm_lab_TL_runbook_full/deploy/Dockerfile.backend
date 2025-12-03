@@ -37,10 +37,11 @@ RUN pip install --no-cache-dir \
     google-generativeai==0.8.3 \
     google-genai==0.1.0
 
-# Copy the backend code and tests
+# Copy the backend code, scripts, tests, and contracts
 COPY backend /app/backend
 COPY scripts /app/scripts
 COPY tests /app/tests
+COPY contracts /app/contracts
 
 # Expose port (internal only, Nginx routes to this)
 EXPOSE 8000

@@ -29,13 +29,15 @@ def seed():
     for tool in tools:
         exists = db.query(ToolConfig).filter_by(name=tool["name"]).first()
         if not exists:
+            # Store tool type in settings since model doesn't have tool_type field
+            settings = tool["settings"].copy()
+            settings["type"] = tool["type"]
             t = ToolConfig(
                 name=tool["name"],
-                tool_type=tool["type"],
                 provider=tool["provider"],
                 cost_per_image=tool.get("cost_per_image", 0.0),
                 cost_per_1k_tokens=tool.get("cost_per_1k_tokens", 0.0),
-                settings=tool["settings"],
+                settings=settings,
                 is_enabled=True
             )
             db.add(t)
