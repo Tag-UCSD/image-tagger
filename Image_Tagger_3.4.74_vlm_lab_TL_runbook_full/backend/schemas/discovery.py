@@ -9,10 +9,11 @@ class SearchQuery(BaseModel):
     page_size: int = 20
 
 class ImageSearchResult(BaseModel):
-    """Contract for Masonry Grid Items"""
-    image_id: int
-    thumbnail_url: str
-    attributes: Dict[str, Any] = {}
+    """Contract for Masonry Grid Items - matches frontend expectations"""
+    id: int
+    url: str
+    tags: List[str] = []
+    meta_data: Dict[str, Any] = {}
     
 class ExportRequest(BaseModel):
     """Contract for Dataset Export"""

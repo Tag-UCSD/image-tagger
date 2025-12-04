@@ -12,14 +12,14 @@ export class ApiClient {
         return this._request(endpoint, { method: 'GET' });
     }
 
-    async post(endpoint, body) {
+    async post(endpoint, body, options = {}) {
         return this._request(endpoint, {
             method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.defaultHeaders,
-        ...(options.headers || {}),
-      },
+            headers: {
+                'Content-Type': 'application/json',
+                ...this.defaultHeaders,
+                ...(options.headers || {}),
+            },
             body: JSON.stringify(body)
         });
     }
@@ -28,14 +28,14 @@ export class ApiClient {
         return this._request(endpoint, { method: 'DELETE' });
     }
 
-    async put(endpoint, body) {
+    async put(endpoint, body, options = {}) {
         return this._request(endpoint, {
             method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.defaultHeaders,
-        ...(options.headers || {}),
-      },
+            headers: {
+                'Content-Type': 'application/json',
+                ...this.defaultHeaders,
+                ...(options.headers || {}),
+            },
             body: JSON.stringify(body)
         });
     }

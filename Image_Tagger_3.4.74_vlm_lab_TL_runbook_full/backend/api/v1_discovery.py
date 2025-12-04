@@ -60,9 +60,11 @@ def search_images(
         elif name_col is not None:
             q = q.filter(name_col.ilike(text))
 
-    limit = max(1, min(getattr(payload, "limit", 50), 200))
-    offset = max(0, getattr(payload, "offset", 0))
-    q = q.order_by(getattr(Image, "id")).offset(offset).limit(limit)
+    # Use page/page_size from schema (frontend sends these)
+    page = max(1, getattr(payload, "page", 1))
+    page_size = max(1, min(getattr(payload, "page_size", 48), 200))
+    offset = (page - 1) * page_size
+    q = q.order_by(getattr(Image, "id")).offset(offset).limit(page_size)
 
     images = q.all()
     results: List[ImageSearchResult] = []
@@ -73,12 +75,20 @@ def search_images(
         image_id = getattr(img, "id", None)
         if image_id is None:
             continue
-        thumb_name = getattr(img, "thumbnail_path", None) or f"image_{image_id}.jpg"
-        thumb_url = f"{base_thumb_url}/{thumb_name}"
-
-        # For now, we do not join attributes here; Explorer primarily needs
-        # thumbnails and IDs to drive downstream detail views and exports.
-        res = ImageSearchResult(image_id=image_id, thumbnail_url=thumb_url, attributes={})
+        
+        # Get URL from storage_path (external URLs) or build thumbnail path
+        storage_path = getattr(img, "storage_path", None)
+        if storage_path and storage_path.startswith("http"):
+            url = storage_path
+        else:
+            thumb_name = getattr(img, "thumbnail_path", None) or f"image_{image_id}.jpg"
+            url = f"{base_thumb_url}/{thumb_name}"
+        
+        # Extract tags from meta_data
+        meta = getattr(img, "meta_data", {}) or {}
+        tags = meta.get("tags", []) if isinstance(meta, dict) else []
+        
+        res = ImageSearchResult(id=image_id, url=url, tags=tags, meta_data=meta)
         results.append(res)
 
     return results
