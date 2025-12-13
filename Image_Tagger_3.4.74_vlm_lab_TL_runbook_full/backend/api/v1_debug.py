@@ -3,7 +3,8 @@ from __future__ import annotations
 import io
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
+import hashlib
 
 import numpy as np
 
@@ -11,6 +12,11 @@ try:
     import cv2  # type: ignore
 except Exception:  # pragma: no cover - cv2 may not be available in tiny CI images
     cv2 = None  # type: ignore
+
+try:
+    import requests
+except Exception:
+    requests = None  # type: ignore
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from backend.science import pipeline as science_pipeline
@@ -23,6 +29,73 @@ from backend.models.assets import Image  # type: ignore
 from backend.services.auth import CurrentUser, require_tagger
 
 router = APIRouter(prefix="/v1/debug", tags=["Debug / Science"])
+
+
+def _is_url(path: str) -> bool:
+    """Check if the path is a URL."""
+    return path.startswith("http://") or path.startswith("https://")
+
+
+def _load_image_from_url_or_path(storage_path: str) -> np.ndarray:
+    """Load an image from either a URL or a local file path.
+    
+    Returns the image as a BGR numpy array (OpenCV format).
+    Raises HTTPException if the image cannot be loaded.
+    """
+    if cv2 is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="cv2 (OpenCV) is not available.",
+        )
+
+    if _is_url(storage_path):
+        # Download image from URL
+        if requests is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="requests library is not available; cannot fetch remote images.",
+            )
+        try:
+            response = requests.get(storage_path, timeout=10)
+            response.raise_for_status()
+            img_array = np.frombuffer(response.content, dtype=np.uint8)
+            img_bgr = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            if img_bgr is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Could not decode image from URL: {storage_path}",
+                )
+            return img_bgr
+        except requests.RequestException as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to download image from URL: {storage_path} - {str(e)}",
+            )
+    else:
+        # Load from local file
+        path = _resolve_image_path(storage_path)
+        if not path.is_file():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Image file not found on disk: {path}",
+            )
+        img_bgr = cv2.imread(str(path))
+        if img_bgr is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Could not read image from storage: {path}",
+            )
+        return img_bgr
+
+
+def _get_cache_key(storage_path: str) -> str:
+    """Generate a cache key from a storage path (works for both URLs and local paths)."""
+    if _is_url(storage_path):
+        # Use hash of URL for cache key to avoid filesystem issues
+        return hashlib.md5(storage_path.encode()).hexdigest()
+    else:
+        return Path(storage_path).stem
+
 
 def _resolve_image_path(storage_path: str) -> Path:
     """Resolve the on-disk path for a stored image.
@@ -45,8 +118,8 @@ def _resolve_image_path(storage_path: str) -> Path:
 
     return raw  # Best-effort; caller will handle missing file
 
-def _compute_edge_map_bytes(path: Path, t1: int = 50, t2: int = 150, l2: bool = True) -> bytes:
-    """Compute a Canny edge map PNG for the given image path.
+def _compute_edge_map_bytes(storage_path: str, t1: int = 50, t2: int = 150, l2: bool = True) -> bytes:
+    """Compute a Canny edge map PNG for the given image.
 
     This mirrors the logic in backend.science.core.AnalysisFrame.compute_derived,
     but is implemented locally to keep the debug endpoint self-contained.
@@ -54,6 +127,8 @@ def _compute_edge_map_bytes(path: Path, t1: int = 50, t2: int = 150, l2: bool = 
     To keep things efficient in classroom settings, we maintain a tiny on-disk
     cache keyed by (image, thresholds, L2 flag). If a matching PNG already
     exists, we serve it directly instead of recomputing.
+    
+    Supports both local file paths and remote URLs.
     """
     if cv2 is None:
         raise HTTPException(
@@ -66,7 +141,8 @@ def _compute_edge_map_bytes(path: Path, t1: int = 50, t2: int = 150, l2: bool = 
     cache_root_path = Path(cache_root)
     cache_root_path.mkdir(parents=True, exist_ok=True)
 
-    cache_name = f"{path.stem}_edges_{t1}_{t2}_{1 if l2 else 0}.png"
+    cache_key = _get_cache_key(storage_path)
+    cache_name = f"{cache_key}_edges_{t1}_{t2}_{1 if l2 else 0}.png"
     cache_path = cache_root_path / cache_name
 
     if cache_path.is_file():
@@ -76,12 +152,8 @@ def _compute_edge_map_bytes(path: Path, t1: int = 50, t2: int = 150, l2: bool = 
             # Fall through to recomputation on any read error
             pass
 
-    img_bgr = cv2.imread(str(path))
-    if img_bgr is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Could not read image from storage: {path}",
-        )
+    # Load image from URL or local path
+    img_bgr = _load_image_from_url_or_path(storage_path)
 
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
     # Allow experimentation with thresholds and the L2gradient flag
@@ -102,6 +174,96 @@ def _compute_edge_map_bytes(path: Path, t1: int = 50, t2: int = 150, l2: bool = 
         pass
     return data
 
+
+
+def _compute_complexity_heatmap_bytes(
+    storage_path: str, 
+    patch_size: int = 64, 
+    stride: int = 32,
+    canny_low: int = 50,
+    canny_high: int = 150,
+) -> bytes:
+    """Compute a regionalized complexity heatmap PNG for the given image.
+
+    This implements the edge-density approach from complexity_regions_demo.py:
+    For each patch in a sliding window, compute:
+        complexity_score = edge_pixels / total_pixels
+    
+    The result is a heatmap overlaid on the original image, where:
+    - Red/Yellow = High complexity (many edges)
+    - Dark Red/Black = Low complexity (few edges)
+    
+    Supports both local file paths and remote URLs.
+    """
+    if cv2 is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="cv2 (OpenCV) is not available; cannot compute complexity heatmaps.",
+        )
+
+    # Compute cache path
+    cache_root = os.getenv("IMAGE_COMPLEXITY_CACHE_ROOT") or os.path.join("backend", "data", "debug_complexity")
+    cache_root_path = Path(cache_root)
+    cache_root_path.mkdir(parents=True, exist_ok=True)
+
+    cache_key = _get_cache_key(storage_path)
+    cache_name = f"{cache_key}_complexity_{patch_size}_{stride}_{canny_low}_{canny_high}.png"
+    cache_path = cache_root_path / cache_name
+
+    if cache_path.is_file():
+        try:
+            return cache_path.read_bytes()
+        except Exception:
+            pass
+
+    # Load image from URL or local path
+    img_bgr = _load_image_from_url_or_path(storage_path)
+
+    gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    h, w = gray.shape
+
+    # Compute complexity for each patch using sliding window
+    out_h = max(1, (h - patch_size) // stride + 1)
+    out_w = max(1, (w - patch_size) // stride + 1)
+    complexity_map = np.zeros((out_h, out_w), dtype=np.float32)
+
+    for i in range(out_h):
+        for j in range(out_w):
+            y_start = i * stride
+            x_start = j * stride
+            patch = gray[y_start:y_start+patch_size, x_start:x_start+patch_size]
+            
+            # Apply Canny edge detector
+            edges = cv2.Canny(patch, canny_low, canny_high)
+            
+            # Compute edge density = edge_pixels / total_pixels
+            edge_pixels = np.count_nonzero(edges)
+            total_pixels = edges.shape[0] * edges.shape[1]
+            complexity_map[i, j] = edge_pixels / total_pixels if total_pixels > 0 else 0.0
+
+    # Resize heatmap to match original image dimensions
+    heatmap_resized = cv2.resize(complexity_map, (w, h), interpolation=cv2.INTER_LINEAR)
+
+    # Normalize to 0-255 and apply colormap
+    heatmap_normalized = (heatmap_resized * 255).astype(np.uint8)
+    heatmap_colored = cv2.applyColorMap(heatmap_normalized, cv2.COLORMAP_HOT)
+
+    # Blend with original image (50% opacity overlay)
+    blended = cv2.addWeighted(img_bgr, 0.5, heatmap_colored, 0.5, 0)
+
+    ok, buf = cv2.imencode(".png", blended)
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to encode complexity heatmap as PNG.",
+        )
+
+    data = buf.tobytes()
+    try:
+        cache_path.write_bytes(data)
+    except Exception:
+        pass
+    return data
 
 
 def _compute_depth_map_bytes(path: Path) -> bytes:
@@ -219,6 +381,8 @@ def get_image_edge_map(
     This endpoint is intended purely for *debug / teaching* purposes. It
     allows Explorer (and other tools) to show "what the algorithm sees"
     when computing complexity and related metrics.
+    
+    Supports both local file paths and remote URLs.
     """
     image: Optional[Image] = db.query(Image).filter(Image.id == image_id).first()
     if image is None:
@@ -231,14 +395,7 @@ def get_image_edge_map(
             detail="Image has no storage_path configured",
         )
 
-    path = _resolve_image_path(storage_path)
-    if not path.is_file():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Image file not found on disk: {path}",
-        )
-
-    data = _compute_edge_map_bytes(path, t1=t1, t2=t2, l2=l2)
+    data = _compute_edge_map_bytes(storage_path, t1=t1, t2=t2, l2=l2)
     return Response(content=data, media_type="image/png")
 
 
@@ -272,6 +429,51 @@ def get_image_depth_map(
 
     data = _compute_depth_map_bytes(path)
     return Response(content=data, media_type="image/png")
+@router.get("/images/{image_id}/complexity", summary="Return complexity heatmap debug view for an image")
+def get_image_complexity_heatmap(
+    image_id: int,
+    patch_size: int = 64,
+    stride: int = 32,
+    t1: int = 50,
+    t2: int = 150,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(require_tagger),
+) -> Response:
+    """Serve a PNG complexity heatmap for the requested image.
+
+    This endpoint shows regionalized edge density across the image:
+    - Each patch is analyzed using Canny edge detection
+    - complexity_score = edge_pixels / total_pixels
+    - Results are displayed as a heatmap overlay (red=high, dark=low)
+
+    Supports both local file paths and remote URLs.
+
+    Parameters:
+    - patch_size: Size of each analysis region (default 64)
+    - stride: Step size between regions (default 32)
+    - t1, t2: Canny edge detection thresholds
+    """
+    image: Optional[Image] = db.query(Image).filter(Image.id == image_id).first()
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+
+    storage_path = getattr(image, "storage_path", None)
+    if not storage_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Image has no storage_path configured",
+        )
+
+    data = _compute_complexity_heatmap_bytes(
+        storage_path, 
+        patch_size=patch_size, 
+        stride=stride,
+        canny_low=t1,
+        canny_high=t2,
+    )
+    return Response(content=data, media_type="image/png")
+
+
 @router.get("/pipeline_health")
 def pipeline_health() -> dict:
     """Return a lightweight view of the science pipeline health.

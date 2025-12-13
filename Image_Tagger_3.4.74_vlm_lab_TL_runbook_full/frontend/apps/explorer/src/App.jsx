@@ -13,7 +13,7 @@ const api = new ApiClient('/api/v1/explorer');
 
 export default function ExplorerApp() {
     const [cart, setCart] = useState([]);
-    const [debugMode, setDebugMode] = useState('none'); // 'none' | 'edges' | 'overlay' | 'depth'
+    const [debugMode, setDebugMode] = useState('none'); // 'none' | 'edges' | 'overlay' | 'depth' | 'complexity'
     const [overlayOpacity, setOverlayOpacity] = useState(0.5);
     const [edgeThresholds, setEdgeThresholds] = useState({ low: 50, high: 150 });
     const [query, setQuery] = useState("");
@@ -204,7 +204,9 @@ export default function ExplorerApp() {
                                 ? 'overlay'
                                 : debugMode === 'overlay'
                                     ? 'depth'
-                                    : 'none';
+                                    : debugMode === 'depth'
+                                        ? 'complexity'
+                                        : 'none';
                         setDebugMode(next);
                     }}
                 >
@@ -215,11 +217,13 @@ export default function ExplorerApp() {
                             ? 'Debug: Edges'
                             : debugMode === 'overlay'
                                 ? 'Debug: Overlay'
-                                : 'Debug: Depth'}
+                                : debugMode === 'depth'
+                                    ? 'Debug: Depth'
+                                    : 'Debug: Complexity'}
                 </Button>
-                {(debugMode === 'edges' || debugMode === 'overlay' || debugMode === 'depth') && (
+                {(debugMode === 'edges' || debugMode === 'overlay' || debugMode === 'depth' || debugMode === 'complexity') && (
                     <div className="flex items-center gap-2 ml-3">
-                        {(debugMode === 'edges' || debugMode === 'overlay') && (
+                        {(debugMode === 'edges' || debugMode === 'overlay' || debugMode === 'complexity') && (
                             <>
                                 <span className="text-xs text-gray-600 hidden md:inline">Edges</span>
                                 <input
@@ -257,6 +261,11 @@ export default function ExplorerApp() {
                         {debugMode === 'depth' && (
                             <span className="text-xs text-gray-600 hidden md:inline">
                                 Depth debug uses model defaults (no sliders).
+                            </span>
+                        )}
+                        {debugMode === 'complexity' && (
+                            <span className="text-xs text-gray-600 hidden md:inline">
+                                Regionalized edge density heatmap
                             </span>
                         )}
                     </div>
@@ -398,7 +407,9 @@ export default function ExplorerApp() {
                                                 ? `/api/v1/debug/images/${img.id}/edges?t1=${edgeThresholds.low}&t2=${edgeThresholds.high}`
                                                 : debugMode === 'depth'
                                                     ? `/api/v1/debug/images/${img.id}/depth`
-                                                    : img.url}
+                                                    : debugMode === 'complexity'
+                                                        ? `/api/v1/debug/images/${img.id}/complexity?t1=${edgeThresholds.low}&t2=${edgeThresholds.high}`
+                                                        : img.url}
                                             alt={img.meta_data && img.meta_data.filename ? img.meta_data.filename : `Image ${img.id}`}
                                             className="w-full h-auto block"
                                             loading="lazy"
