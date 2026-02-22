@@ -85,10 +85,16 @@ class DepthAnalyzer:
     def _compute_depth_map(cls, frame: AnalysisFrame) -> Optional[np.ndarray]:
         """Compute a normalized depth map for the frame, if configured.
 
+        If frame.depth_map is already set (e.g. by DepthAnythingAnalyzer),
+        returns it. Otherwise uses ONNX model when available.
+
         Returns a H×W float32 array in [0, 1] when successful, otherwise
         ``None``. Any errors cause a clean fallback to the legacy
         edge-based heuristics.
         """
+        if getattr(frame, "depth_map", None) is not None:
+            return frame.depth_map
+
         session = cls._get_onnx_session()
         if session is None:
             return None

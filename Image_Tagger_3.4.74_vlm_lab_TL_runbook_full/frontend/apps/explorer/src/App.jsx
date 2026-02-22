@@ -316,7 +316,7 @@ export default function ExplorerApp() {
                         )}
                         {debugMode === 'depth' && (
                             <span className="text-xs text-gray-600 hidden md:inline">
-                                Depth debug uses model defaults (no sliders).
+                                Depth Anything V2 (Spectral_r colormap)
                             </span>
                         )}
                         {debugMode === 'complexity' && (

@@ -21,8 +21,6 @@ except Exception:
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from backend.science import pipeline as science_pipeline
 from backend.science.core import AnalysisFrame
-from backend.science.spatial.depth import DepthAnalyzer
-from backend.science.vision.segmentation import SegmentationAnalyzer
 from backend.science.vision.room_detection import RoomDetectionAnalyzer, COARSE_CATEGORIES
 from backend.science.vision.materials import GeminiMaterialAnalyzer
 from sqlalchemy.orm import Session
@@ -291,6 +289,8 @@ def _compute_segmentation_overlay_bytes(
     Returns:
         PNG image bytes with segmentation overlay
     """
+    from backend.science.vision.segmentation import SegmentationAnalyzer
+    
     if cv2 is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -457,103 +457,51 @@ def _compute_segmentation_overlay_bytes(
     return data
 
 
-def _compute_depth_map_bytes(path: Path) -> bytes:
-    """Compute a depth-map PNG for the given image path.
+def _compute_depth_map_bytes(storage_path: str) -> bytes:
+    """Compute a depth-map PNG for the given image (Depth Anything V2, Spectral_r colormap).
 
-    This uses the DepthAnalyzer's monocular depth model if it is configured
-    (via DEPTH_ANYTHING_ONNX_PATH and onnxruntime). If depth inference is
-    not available, we surface a 503 so that the frontend can show a clear
-    maintenance overlay rather than silently failing.
-
-    The returned PNG is a single-channel grayscale image where lighter
-    pixels correspond to *farther* regions and darker pixels to nearer
-    regions, after a simple per-image normalisation.
+    Uses the Hugging Face Depth-Anything-V2-Small-hf model via the vision
+    depth_perception module. Supports both local paths and URLs.
+    If the model is not available (transformers/torch not installed), returns 503.
     """
+    from backend.science.vision.depth_perception import compute_depth_colormap_png
+    
     if cv2 is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="cv2 (OpenCV) is not available; cannot compute depth maps.",
         )
 
-    # Compute cache path
     cache_root = os.getenv("IMAGE_DEPTH_DEBUG_CACHE_ROOT") or os.path.join("backend", "data", "debug_depth")
     cache_root_path = Path(cache_root)
     cache_root_path.mkdir(parents=True, exist_ok=True)
 
-    cache_name = f"{path.stem}_depth.png"
+    cache_key = _get_cache_key(storage_path)
+    cache_name = f"{cache_key}_depth_v2.png"
     cache_path = cache_root_path / cache_name
 
     if cache_path.is_file():
         try:
             return cache_path.read_bytes()
         except Exception:
-            # Fall through to recomputation on any read error
             pass
 
-    img_bgr = cv2.imread(str(path))
-    if img_bgr is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Could not read image from storage: {path}",
-        )
-
+    img_bgr = _load_image_from_url_or_path(storage_path)
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
-    # Minimal AnalysisFrame: we only need original_image and a dummy id.
-    frame = AnalysisFrame(image_id=-1, original_image=img_rgb)
-
-    depth = DepthAnalyzer._compute_depth_map(frame)
-    if depth is None:
-        # Surface as a 503 so clients know depth debug is temporarily
-        # unavailable (e.g. missing model weights or onnxruntime).
+    data = compute_depth_colormap_png(img_rgb)
+    if data is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
-                "Depth debug is not configured. Ensure DEPTH_ANYTHING_ONNX_PATH "
-                "is set and onnxruntime is installed."
+                "Depth debug (Depth Anything V2) is not available. "
+                "Install transformers and torch to enable."
             ),
         )
 
-    import numpy as _np  # local alias to keep debug module dependency-light
-
-    arr = _np.asarray(depth, dtype="float32")
-    if arr.ndim == 3:
-        arr = arr[..., 0]
-    if arr.ndim != 2 or arr.size == 0:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Depth model returned an invalid depth map.",
-        )
-
-    # Normalise depth to [0, 1] per-image to maximise visual contrast.
-    d_min = float(_np.nanmin(arr))
-    d_max = float(_np.nanmax(arr))
-    if not _np.isfinite(d_min) or not _np.isfinite(d_max):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Depth map contained only NaN / Inf values.",
-        )
-
-    if d_max > d_min:
-        norm = (arr - d_min) / (d_max - d_min)
-    else:
-        norm = _np.zeros_like(arr, dtype="float32")
-
-    norm = _np.clip(norm, 0.0, 1.0)
-    depth_uint8 = (norm * 255.0).astype("uint8")
-
-    ok, buf = cv2.imencode(".png", depth_uint8)
-    if not ok:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to encode depth map as PNG.",
-        )
-
-    data = buf.tobytes()
     try:
         cache_path.write_bytes(data)
     except Exception:
-        # Cache write failure should not break the endpoint
         pass
     return data
 
@@ -596,29 +544,22 @@ def get_image_depth_map(
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_tagger),
 ) -> Response:
-    """Serve a PNG depth map for the requested image.
+    """Serve a PNG depth map for the requested image (Depth Anything V2, Spectral_r colormap).
 
     This endpoint is intended purely for *debug / teaching* purposes. It
-    exposes the monocular depth prediction used by the spatial metrics so
-    that students can see "what the model thinks is near vs far".
+    uses the Hugging Face Depth-Anything-V2-Small-hf model so students
+    can see near vs far. Supports both local paths and URLs.
 
-    If the depth model is not configured, the endpoint returns HTTP 503 so
-    that the frontend can surface a clear maintenance overlay instead of
-    a generic network error.
+    If the model is not available, the endpoint returns HTTP 503.
     """
-    from backend.models.assets import Image  # local import to avoid circularity
-
-    session: Session = db
-    image = session.query(Image).filter(Image.id == image_id).one_or_none()
-    if image is None or not image.storage_path:
+    image: Optional[Image] = db.query(Image).filter(Image.id == image_id).first()
+    if image is None or not getattr(image, "storage_path", None):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Image {image_id} not found or has no storage_path.",
         )
 
-    path = _resolve_image_path(image.storage_path)
-
-    data = _compute_depth_map_bytes(path)
+    data = _compute_depth_map_bytes(image.storage_path)
     return Response(content=data, media_type="image/png")
 @router.get("/images/{image_id}/complexity", summary="Return complexity heatmap debug view for an image")
 def get_image_complexity_heatmap(
@@ -1173,6 +1114,7 @@ def pipeline_health() -> dict:
         "SymmetryAnalyzer",
         "NaturalnessAnalyzer",
         "DepthAnalyzer",
+        "DepthAnythingAnalyzer",
         "CognitiveStateAnalyzer",
         "SegmentationAnalyzer",
         "RoomDetectionAnalyzer",

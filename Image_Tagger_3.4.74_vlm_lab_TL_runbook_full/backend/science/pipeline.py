@@ -31,6 +31,7 @@ from backend.science.context.cognitive import CognitiveStateAnalyzer
 from backend.science.semantics.semantic_tags_vlm import SemanticTagAnalyzer
 from backend.science.vision.segmentation import SegmentationAnalyzer  # Now uses OneFormer
 from backend.science.vision.materials import GeminiMaterialAnalyzer
+from backend.science.vision.depth_perception import DepthAnythingAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,12 @@ class SciencePipelineConfig:
         self.enable_semantic = False   # Semantic VLM (style.*, room_function.*)
         # Instance segmentation (YOLO11m-seg) - opt-in for object detection
         self.enable_segmentation = False  # Instance segmentation with YOLO
+        self.segmentation_use_semantic = False  # Whether to use semantic segmentation
+        self.segmentation_use_panoptic = False  # Whether to use panoptic segmentation
+        # Depth Anything V2 (Hugging Face) - opt-in for monocular depth
+        self.enable_depth_perception = False
+        # Materials VLM (Gemini Flash) - opt-in for material detection
+        self.enable_materials_vlm = False
 
 class SciencePipeline:
     def __init__(
@@ -71,6 +78,8 @@ class SciencePipeline:
         self.cognitive = CognitiveStateAnalyzer()
         self.semantic = SemanticTagAnalyzer()
         self.segmentation = SegmentationAnalyzer()  # YOLO11m-seg instance segmentation
+        self.depth_perception = DepthAnythingAnalyzer()  # Depth Anything V2 (HF)
+        self.materials_vlm = GeminiMaterialAnalyzer()  # Gemini Flash material detection
 
     def process_image(self, image_id: int) -> bool:
         image_record = self.db.query(Image).get(image_id)
@@ -96,10 +105,14 @@ class SciencePipeline:
                 self.texture.analyze(frame)
             if self.config.enable_fractals:
                 self.fractals.analyze(frame)
+            # L1.5: Depth Anything V2 (runs before spatial so spatial can use frame.depth_map)
+            if self.config.enable_depth_perception:
+                self.depth_perception.analyze(frame)
+
             if self.config.enable_spatial:
                 self.symmetry.analyze(frame)
                 self.naturalness.analyze(frame)
-                self.spatial.analyze(frame)  # Runs Depth/Clutter
+                self.spatial.analyze(frame)  # Uses frame.depth_map if set
 
             # L1: Perceptual (Dependent on L0)
             if self.config.enable_spatial:
