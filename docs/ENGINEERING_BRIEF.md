@@ -9,10 +9,11 @@ editor_options:
 Start here: read `docs/workplan/PRE_SPRINT.md` first, then execute from
 `docs/workplan/PLAN_BACKEND_PHASE1.md` and
 `docs/workplan/PLAN_FRONTEND_PHASE1.md` after the pre-sprint is
-complete. For v1, execution authority is shared across
+complete. If the team chooses to integrate the Tagging Registry System
+(TRS), execute `docs/workplan/PLAN_TRS_INTEGRATION.md` in parallel only
+after pre-sprint. For v1, execution authority is shared across
 `docs/workplan/PRE_SPRINT.md`, `docs/workplan/COORDINATION.md`,
-`docs/CONTRACT.md`, and the relevant `*_PHASE1.md` file for the track
-you are executing.
+`docs/CONTRACT.md`, and the relevant track plan file you are executing.
 
 The product currently has four user journeys: Explorer for public browse
 and image detail, Workbench for human-in-the-loop tagging, Monitor for
@@ -52,7 +53,7 @@ stray changelogs, no sibling projects, and no `archive/` outside
 
 Do not begin Phase 2 until every exit criterion above is checked off.
 
-**Phase 2 — Parallel Phase 1 Execution (split)**
+**Phase 2 — Parallel Phase 1 Execution (split, with optional Track C)**
 
 Engineer A owns Backend Phase 1. The scope is the deployable backend
 foundation: environment and secrets management, structured logging,
@@ -76,6 +77,14 @@ Frontend Phase 1 does not include a sign-in UI; protected routes are
 exercised through role-scoped pre-issued JWTs configured in the deployed
 frontend environment.
 
+Engineer C, if assigned, owns the TRS integration track. Its scope is a
+non-blocking, build-time-only ingestion path from the pinned
+`TRS_v1.1` registry bundle into repo-local artifacts that Backend Phase
+1 and Frontend Phase 1 can consume after review. Track C does not make
+TRS a runtime dependency for v1, does not add the TRS API or UI to the
+smoke path, and does not override `docs/CONTRACT.md` without explicit
+review.
+
 **Phase 3 — Optional Follow-Up (both engineers if chosen)**
 
 Optional Phase 2 work begins only after the v1 milestone is tagged or
@@ -98,10 +107,14 @@ performance polish. None of this work is required for the v1 smoke flow.
 | `docs/workplan/PLAN_BACKEND_PHASE2.md` | Engineer A | Would be nice, but out of scope for now |
 | `docs/workplan/PLAN_FRONTEND_PHASE1.md` | Engineer B | Use after pre-sprint for the required v1 frontend work. |
 | `docs/workplan/PLAN_FRONTEND_PHASE2.md` | Engineer B | Would be nice, but out of scope for now |
+| `docs/workplan/PLAN_TRS_INTEGRATION.md` | Engineer C | Use after pre-sprint only if the team wants TRS integrated as a build-time artifact source without making it part of the Phase 1 runtime boundary. |
 
 Anything under root-level `_archive/` is historical material only. Do
 not use archived docs as execution instructions, source-of-truth plans,
-or acceptance criteria.
+or acceptance criteria. The only exception is the explicitly selected
+TRS source snapshot under `TRS_v1.1/` when working from
+`docs/workplan/PLAN_TRS_INTEGRATION.md`; even then, TRS is an upstream
+build-time input, not a runtime authority for Phase 1.
 
 If you are using an LLM coding agent, do not paste only a single plan
 file. Give the agent `docs/CONTRACT.md`, the relevant Phase 1 plan file,
@@ -117,6 +130,9 @@ acceptance criterion before moving to the next.
     track work.
 -   Branch the two main Phase 1 tracks from post-pre-sprint `main` as
     `track-a-backend-phase1` and `track-b-frontend-phase1`.
+-   If Track C is in play, branch `track-c-trs-integration` from the
+    same post-pre-sprint `main` and keep it non-blocking to the live
+    smoke path.
 -   Use short-lived feature branches under each track, named like
     `track-a/[task-id]` or `track-b/[task-id]`, and merge them back into
     the track branch by PR.
@@ -126,12 +142,17 @@ acceptance criterion before moving to the next.
 -   Aim to sync at at least the three defined points: pre-sprint
     contract committed to `main`, mid-sprint trust-envelope schema
     finalized, and the final joint mock-to-live swap session.
+-   If Track C is active, add one early contract-diff review before
+    Engineer A finalizes A-7 and Engineer B hardens long-lived shared
+    types or fixtures.
 
 ## First Steps
 
 1.  Open `docs/workplan/PRE_SPRINT.md` and execute the pre-sprint
     sequence together.
 2.  Read `docs/CONTRACT.md`, `docs/workplan/PLAN_BACKEND_PHASE1.md`, and
-    `docs/workplan/PLAN_FRONTEND_PHASE1.md` before branching.
+    `docs/workplan/PLAN_FRONTEND_PHASE1.md` before branching. If using
+    Track C, read `docs/workplan/PLAN_TRS_INTEGRATION.md` as well.
 3.  After branching, Engineer A starts with Backend Phase 1 Task A-1 and
-    Engineer B starts with Frontend Phase 1 Task B-1.
+    Engineer B starts with Frontend Phase 1 Task B-1. If assigned,
+    Engineer C starts with TRS Task C-1.

@@ -24,7 +24,7 @@ A full joint restructure (A) is unjustified because the internal structure of `b
 
 # COORDINATION MAP
 
-This file is part of the authoritative v1 execution set, not optional background. Coordination Tasks C-1, C-1.5, and C-2 are mandatory supporting work for the Phase 1 release and must be treated as required inputs to the final smoke session alongside `docs/CONTRACT.md` and the track plan files.
+This file is part of the authoritative v1 execution set, not optional background. Coordination Tasks C-1, C-1.5, and C-2 are mandatory supporting work for the Phase 1 release and must be treated as required inputs to the final smoke session alongside `docs/CONTRACT.md` and the track plan files. If the team enables the optional TRS integration track, `docs/workplan/PLAN_TRS_INTEGRATION.md` becomes part of the execution set for Engineer C, but it remains non-blocking to the Phase 1 smoke path.
 
 | Sync Point | Track A Deliverable | Track B Dependency |
 |---|---|---|
@@ -34,7 +34,16 @@ This file is part of the authoritative v1 execution set, not optional background
 
 **Three sync points — inside the stated budget of four.** The contract and Phase 1 plan docs absorb what would otherwise have been a dozen coordination moments: endpoint shapes, error formats, protected-vs-public route behavior, pagination, trust-envelope shape, and the v1 end state are all resolved on day zero. Optional Phase 2 work is explicitly non-blocking; if the team later wants Prometheus `/metrics`, full Alembic replacement, seeded monitor IRR data, or backend deploy automation, that work starts only after the Phase 1 milestone is accepted.
 
-**Branching strategy.** Both engineers branch from `main` immediately after the pre-sprint merge. Engineer A works on `track-a-backend-phase1` and Engineer B on `track-b-frontend-phase1`. Within each track, use short-lived feature branches (`track-a/auth-supabase`, `track-b/workbench-form`) that open PRs back into the track branch; Engineer A reviews Engineer B's PRs for contract conformance only (not CSS), and Engineer B reviews Engineer A's PRs for API-shape conformance only (not SQL). Merge order is: backend Phase 1 to `main`, frontend Phase 1 mock-to-live swap in the joint session, then frontend Phase 1 to `main`, then tag the v1 portfolio release. Optional Phase 2 branches, if taken, start only after the v1 tag or by explicit decision to continue after Phase 1 completion.
+**Optional Track C — TRS integration.** If Engineer C is assigned, Track C starts from the same post-pre-sprint `main` but remains a build-time-only integration lane. Its deliverables are exported artifacts, sync validation, and contract-diff proposals derived from the pinned `TRS_v1.1` snapshot. Track C does not add a required fourth smoke dependency, does not make the TRS API/UI part of the deployed topology, and does not bypass `docs/CONTRACT.md` as the active app contract.
+
+**Branching strategy.** Both engineers branch from `main` immediately after the pre-sprint merge. Engineer A works on `track-a-backend-phase1` and Engineer B on `track-b-frontend-phase1`. If enabled, Engineer C works on `track-c-trs-integration`. Within each track, use short-lived feature branches (`track-a/auth-supabase`, `track-b/workbench-form`, `track-c/trs-export`) that open PRs back into the track branch; Engineer A reviews Engineer B's PRs for contract conformance only (not CSS), Engineer B reviews Engineer A's PRs for API-shape conformance only (not SQL), and Engineer C's PRs are reviewed by Engineer A for backend adoption boundaries and by Engineer B only when shared types or labels are affected. Merge order is: backend Phase 1 to `main`, frontend Phase 1 mock-to-live swap in the joint session, then frontend Phase 1 to `main`, then tag the v1 portfolio release. Track C merges when its artifacts and contract diffs are ready, but it must not become a gate on the smoke runbook. Optional Phase 2 branches, if taken, start only after the v1 tag or by explicit decision to continue after Phase 1 completion.
+
+#### Optional Coordination Task C-0: TRS Contract-Diff Review
+- **Goal:** expose TRS-driven contract implications early enough that Engineers A and B can adopt approved changes without churn.
+- **Owner:** Engineer C proposing; Engineer A and Engineer B reviewing by ownership boundary.
+- **Files to create or modify:** `docs/TRS_CONTRACT_DIFF.md`, `docs/CONTRACT.md` only if approved.
+- **Implementation notes:** Engineer C compares the pinned TRS snapshot to the current image-tagger contract and generated artifacts, then proposes only the narrow changes that benefit Phase 1. This review must happen before Engineer A finalizes A-7 and before Engineer B treats shared types and fixtures as frozen. Rejected or deferred diffs stay out of the active contract and wait until after the v1 tag.
+- **Acceptance criteria:** a reviewed `docs/TRS_CONTRACT_DIFF.md` exists; every listed difference is marked accepted-now, deferred-post-v1, or rejected-for-v1; no Track C artifact silently changes the live app contract without explicit approval.
 
 #### Coordination Task C-1: Deployed Smoke Test Runbook
 - **Goal:** Create one shared smoke-test runbook before the B-9 mock-to-live session so deployment verification is copy-pasteable instead of improvised.
@@ -57,25 +66,3 @@ This file is part of the authoritative v1 execution set, not optional background
 - **Acceptance criteria:** `docs/SMOKE_TEST.md` contains an ownership note naming Engineer A as the JWT provisioner, lists the three required env vars, and states that raw JWTs and passwords must not be committed, pasted into docs, or stored in the repo.
 
 **The one joint Phase 1 task.** Task B-9 — mock-to-live swap with end-to-end smoke test — is performed by both engineers in one screen-sharing session lasting approximately one hour, using `docs/SMOKE_TEST.md` as the single acceptance runbook and inspectable artifact. That session starts only after both engineers have completed the human platform verification steps from Tasks A-12b and B-8b. For monitor, the Phase 1 acceptance bar is that the deployed route and UI handle the contracted response shape correctly, including the empty state. Phase 2 work does not create additional required sync points unless both engineers explicitly choose to take it on.
-
----
-
-## References
-
-Brown, L. D., Cai, T. T., & DasGupta, A. (2001). Interval estimation for a binomial proportion. *Statistical Science*, 16(2), 101–133. https://doi.org/10.1214/ss/1009213286
-
-Fowler, M. (2018). *Refactoring: Improving the design of existing code* (2nd ed.). Addison-Wesley.
-
-Landis, J. R., & Koch, G. G. (1977). The measurement of observer agreement for categorical data. *Biometrics*, 33(1), 159–174. https://doi.org/10.2307/2529310
-
-Nygard, M. T. (2018). *Release it! Design and deploy production-ready software* (2nd ed.). Pragmatic Bookshelf.
-
-Raschka, S. (2020). Model evaluation, model selection, and algorithm selection in machine learning. *arXiv Preprint*. https://doi.org/10.48550/arXiv.1811.12808
-
-Richardson, C. (2018). *Microservices patterns: With examples in Java*. Manning.
-
-Sculley, D., Holt, G., Golovin, D., Davydov, E., Phillips, T., Ebner, D., Chaudhary, V., Young, M., Crespo, J.-F., & Dennison, D. (2015). Hidden technical debt in machine learning systems. *Advances in Neural Information Processing Systems*, 28, 2503–2511. https://doi.org/10.5555/2969442.2969519
-
-Sheng, V. S., Provost, F., & Ipeirotis, P. G. (2008). Get another label? Improving data quality and data mining using multiple, noisy labelers. In *Proceedings of the 14th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining* (pp. 614–622). https://doi.org/10.1145/1401890.1401965
-
-Web Content Accessibility Guidelines (WCAG) 2.1. (2018). W3C Recommendation. https://www.w3.org/TR/WCAG21/
