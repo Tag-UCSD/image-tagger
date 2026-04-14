@@ -101,7 +101,10 @@ def freeze(conf: Dict[str, Any], lock_path: Optional[Path] = None) -> None:
 
     baseline = snapshot(conf)
     lock_path.write_text(json.dumps(baseline, indent=2), encoding="utf-8")
-    rel = lock_path.relative_to(REPO_ROOT).as_posix()
+    try:
+        rel = lock_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        rel = str(lock_path)
     print(f"[guardian] Baseline written to {rel}")
 
 

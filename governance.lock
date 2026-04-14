@@ -1,17 +1,25 @@
 {
   "policy_version": "3.0.0",
   "protected_files": {
+    "backend/database/google_image_data.json": {
+      "hash": "5a5b37a4eb6ecc6a96224b14dae6efd8af3c84f7653a41cc0c22d10a29d99883",
+      "size": 3951089
+    },
     "backend/database/mixins.py": {
       "hash": "8a64be69c949be93a7464568c0608efda52842b92164c1d9658d0aea8ee9eac3",
       "size": 616
     },
     "backend/database/__init__.py": {
-      "hash": "3877da7309c607610b45642fe229888c07a5eba568084c9bf96fbb387605a2b0",
-      "size": 26
+      "hash": "150d7e273b55d55a02a60281c18ef4291b5319a35b6266d6e620b7af369cfff9",
+      "size": 95
     },
     "backend/database/core.py": {
       "hash": "70b3943d0046c47831652d243e62c5dd71b9b15ae89384598648ee52f6bc11eb",
       "size": 1061
+    },
+    "backend/database/google_images_import.json": {
+      "hash": "d569a585a51fad85dc43770fe3c1f375902d61493c694e02f4ff303559334f96",
+      "size": 5529665
     },
     "backend/science/features_registry.py": {
       "hash": "e5582362affe751c16d3564ad226a38bbdc493aceb903aba45c5c80b1cf7b7ea",
@@ -22,28 +30,36 @@
       "size": 2253
     },
     "backend/science/index_catalog.py": {
-      "hash": "d7dd66f844c857e0c2e366bb7e5edf598fd3d3f7f98952996e489ae59df4ff58",
-      "size": 1372
+      "hash": "b61016c9843d2fbced337e5076d508cd050faa9fed5adc66f547f977c4c13178",
+      "size": 1622
     },
     "backend/science/features_canonical.jsonl": {
-      "hash": "8956943640c4fcbe2036929e7c99357b5099c6da2723bd662a71335ed1931d7f",
-      "size": 62936
+      "hash": "f72b2e892c2991e369c9d7a23f18bd89086febcd44a7d4ea262cc6f45530a2c5",
+      "size": 68942
     },
     "backend/science/__init__.py": {
       "hash": "f0be820d4df5b438267d41177779831df166bc8bb5581297b6eaaceb36c4835d",
       "size": 25
     },
     "backend/science/core.py": {
-      "hash": "ded1003c444f38150ef818dfc3715791b35c2eef2dbc5430982eefed4550c4ff",
-      "size": 1821
+      "hash": "a06d63588a6a452b616189060710034270e8a8d65f0efdd24a28bf623f72f045",
+      "size": 2083
+    },
+    "backend/science/biophilia.py": {
+      "hash": "cdf4bb5b36327932c2eff0e9941a9dd1392f90137eac272ed0082050093d2a4b",
+      "size": 1925
     },
     "backend/science/summary.py": {
       "hash": "38c10ff58033499448e5f5149a4ff254db73e6306b646dbb4797781b81f0f325",
       "size": 2726
     },
+    "backend/science/run_context.py": {
+      "hash": "a6e4a2a40cf0864d777e1504054b5fb120baeaa468683e7a493ea46c6953b0da",
+      "size": 2834
+    },
     "backend/science/pipeline.py": {
-      "hash": "94dd64ab4885a8baa468bad0e8e8594a79003fef567250d22a37771cac669081",
-      "size": 4664
+      "hash": "398fa24d8ecdc6f67f3bea8853a3ed53e90a11bff2609b7c8d10baa53412b827",
+      "size": 20589
     },
     "backend/science/bn_naming_guard.py": {
       "hash": "4fb78c060e4fd503ef5d939847450d2f439fe85030de7ab940ee1089dd0925e8",
@@ -61,37 +77,53 @@
       "hash": "b1c282f7b610218885c3286299f6a3c6f14a80107d042724a558b4e5d06d047e",
       "size": 1408
     },
+    "backend/science/tag_derivation.py": {
+      "hash": "b6139d933ec2c2acf8b0303027a3e817221de365876b541dbd7222448b027fd7",
+      "size": 7375
+    },
     "backend/science/context/social.py": {
       "hash": "6061f94865c7b9f36309edee4f3670efc932f3995b91a0634668bb49029d5c95",
       "size": 1257
+    },
+    "backend/science/context/affordance.py": {
+      "hash": "50ab8717ed232801c0587871e851daa6b72c17f356c35915da048e27f46d27d5",
+      "size": 31945
     },
     "backend/science/context/cognitive.py": {
       "hash": "b0f8cb05f07ec1bd4b0176b922afe5857cb0c120a97361899e40d0578dc077bb",
       "size": 6074
     },
     "backend/science/vision/materials.py": {
-      "hash": "759189e40551efa5fc9187222b6259b006dba92f7dbe29b557ca09a2e3d318a9",
-      "size": 7260
+      "hash": "a84ec3b3f849a1951673c2df38e2500795a61eb9f623523c407d94f43c1f469e",
+      "size": 30764
     },
-    "backend/science/vision/objects.py": {
-      "hash": "f75b41bdbe5fc03d8787f338c1f93e5f366f968971cb78d6a9801fe97d36864f",
-      "size": 1764
+    "backend/science/vision/__init__.py": {
+      "hash": "1150ea8836ac22020d0734a70f9915b74e94759a5ad239b7ce53d29993e7f96f",
+      "size": 549
     },
-    "backend/science/__pycache__/feature_stubs.cpython-312.pyc": {
-      "hash": "1f65dc8893d9a1a58cb14113f9c800031061f11d24ee9d22ef0a7055517f366a",
-      "size": 3072
+    "backend/science/vision/mask2former.py": {
+      "hash": "684dd30ad7fce59d3bf1eb90de19a67217127ba378cff46453a3061e0a9f6824",
+      "size": 5044
     },
-    "backend/science/__pycache__/pipeline.cpython-312.pyc": {
-      "hash": "593d18efc804afc03d7626c12a7e643136cd62602b0f50b9fdb832d03e80c4fa",
-      "size": 6732
+    "backend/science/vision/clip_material.py": {
+      "hash": "94f3539f61c9bd861c29754410b9545cc9afa3cf4b478bf70c8031f003d11325",
+      "size": 19903
     },
-    "backend/science/__pycache__/__init__.cpython-312.pyc": {
-      "hash": "110295fdada4177da0969660c886304ebe7d2a65ce7c6bdaa11617167faa8d89",
-      "size": 236
+    "backend/science/vision/room_detection.py": {
+      "hash": "bcde7f7a0c831763431ba77e4e1e42a86e45868405ed82168a818fe6cae442af",
+      "size": 32108
+    },
+    "backend/science/vision/segmentation.py": {
+      "hash": "12b5c6bfce6d6b9c63435e3b60342d636e23c6ed654a5bc994b7bd658c5653d8",
+      "size": 22662
     },
     "backend/science/semantics/arch_parts_vlm.py": {
       "hash": "296f1701573a026fbc27d0736b550102687a8800b413a3784d757d7f9482b8ae",
       "size": 2216
+    },
+    "backend/science/semantics/building_type_ollama.py": {
+      "hash": "46bc01fc02875e4daa33312f011e461cca5eab2e54856df224ca41ad3731b42c",
+      "size": 5530
     },
     "backend/science/semantics/arch_patterns_vlm.py": {
       "hash": "f4ee4400ce4a18ce163fef8ea713eca8160455447e2efe84ccb88151871ee1b9",
@@ -110,8 +142,8 @@
       "size": 2328
     },
     "backend/science/math/glcm.py": {
-      "hash": "3148b2405fb18e488ff8c3982cd35b932f32f3594358d3437a58fa951ad3867f",
-      "size": 1565
+      "hash": "3479f08abb921e2d26d150db7d979993349d8b7a2c046e275d239bbdd29cc327",
+      "size": 1706
     },
     "backend/science/math/color.py": {
       "hash": "f762f7e6a4fae7e4cda69a9817e8f34a8f8a933397283c6617880975160ffe0a",
@@ -138,8 +170,8 @@
       "size": 1814
     },
     "backend/science/math/naturalness.py": {
-      "hash": "3f82aae65d7599f4c3c64d5e620235412916fd7b14b3f244b1c545a42c9df974",
-      "size": 2891
+      "hash": "463771caab33af0bc14f5c5568dcf81d3a200a9cc7a508fa66cedb2874f85e0b",
+      "size": 2896
     },
     "backend/science/spatial/isovist_25d.py": {
       "hash": "234a458dcb239057a850a71591511543e94d413b0cedda49c29b6b5c21391c15",
@@ -156,6 +188,106 @@
     "backend/science/spatial/isovist.py": {
       "hash": "e6c5680ddf2ebe51ee36380d83fe3a6b7041cac669b448b49aa1ecee4141b189",
       "size": 1871
+    },
+    "backend/science/data/affordance_models/affordance_definitions.json": {
+      "hash": "0fe26e273f71d2efd156d58e145402bfa408c22bb67af2146145e0c86eea292b",
+      "size": 20085
+    },
+    "backend/science/data/affordance_models/feature_columns.json": {
+      "hash": "81493754b3af2e4c06ec94bb453aadaa50341da5d231d585e75860a9b99b222f",
+      "size": 6832
+    },
+    "backend/science/data/affordance_models/training_summary.json": {
+      "hash": "3076befce919b604f37c6cd2120b757cd56f57b27a270234d914ee4c976274f9",
+      "size": 942
+    },
+    "backend/science/data/affordance_models/indicator_vocabulary.json": {
+      "hash": "4d0c8184cf1925ab3ff6c5b8784961d7a749be5028b92c8850d0b959827a69a8",
+      "size": 690806
+    },
+    "backend/science/data/affordance_models/L130/lgbm_model.pkl": {
+      "hash": "b4d6795e227ea182f2b69dc05de5c2ddb7c5ae3432aa78152595b9dec01bd092",
+      "size": 523524
+    },
+    "backend/science/data/affordance_models/L130/lgbm_indicators_model.pkl": {
+      "hash": "afa0a93028abb1750992a9c526c62cbe67d767b3054466555da1bfc30da4ad3b",
+      "size": 215457
+    },
+    "backend/science/data/affordance_models/L130/test_metrics.json": {
+      "hash": "b9e5f36b7981f0e3a0dc03ca8634bea635024e4fdee84f3852fd09d59f36232e",
+      "size": 86
+    },
+    "backend/science/data/affordance_models/L130/best_params.json": {
+      "hash": "59fba003c169a56a7a4ffe60fd42aa44d614e0663f1d39b6dce08a4dba4f2484",
+      "size": 340
+    },
+    "backend/science/data/affordance_models/L059/lgbm_model.pkl": {
+      "hash": "76831b2cc7e36a8c718de75fd65f2ed346300699339365f075466a85d70be562",
+      "size": 267175
+    },
+    "backend/science/data/affordance_models/L059/lgbm_indicators_model.pkl": {
+      "hash": "8c3dd758ef5ca6dfadc31db0ae80d7a751de11e1671c46ecd9e402cd10247d94",
+      "size": 440335
+    },
+    "backend/science/data/affordance_models/L059/test_metrics.json": {
+      "hash": "0219f039c7d404e6fc021bee214487772cc77630005c6ef33f7a48ba134233fc",
+      "size": 85
+    },
+    "backend/science/data/affordance_models/L059/best_params.json": {
+      "hash": "597a93fa4e292d2c2f1e1f846e885ef367507269f6558e4e192c3e65787680e9",
+      "size": 340
+    },
+    "backend/science/data/affordance_models/L141/lgbm_model.pkl": {
+      "hash": "2b838ef8588ef5bd98de146e7bdc5c80a7d0937e6b63d37a9424f41a12b75192",
+      "size": 301702
+    },
+    "backend/science/data/affordance_models/L141/lgbm_indicators_model.pkl": {
+      "hash": "aad452398edaba05ff4a3b8f8608f7a9c26b6063357bfd6aac363c97fbeb703e",
+      "size": 282581
+    },
+    "backend/science/data/affordance_models/L141/test_metrics.json": {
+      "hash": "5c74d6bc9e9acdb8d7717c8bb6a08a5a362facca47ab22527e54e58575c4f7ab",
+      "size": 86
+    },
+    "backend/science/data/affordance_models/L141/best_params.json": {
+      "hash": "c607786698a807d698b9f9c03d90035091b8902f24676b13da2aa04d68647f6a",
+      "size": 343
+    },
+    "backend/science/data/affordance_models/L079/lgbm_model.pkl": {
+      "hash": "edd9e22d6098cb200454128b5de750a59299c82d306a26ac8af9e8ff93e9a1ce",
+      "size": 494992
+    },
+    "backend/science/data/affordance_models/L079/lgbm_indicators_model.pkl": {
+      "hash": "e21456dd30834736a5cd61379a63fad0a4fc158201587870e8c44c1c94eae285",
+      "size": 144358
+    },
+    "backend/science/data/affordance_models/L079/test_metrics.json": {
+      "hash": "6cdc37ea8e3ce472ec500745fac712c8c3f82790828fc6f63ac52945a181584a",
+      "size": 86
+    },
+    "backend/science/data/affordance_models/L079/best_params.json": {
+      "hash": "bb629e8f9ceff3b3b44ebc9fd7f0fbd4e635585f0c2a606af21554b5bcea5a2b",
+      "size": 339
+    },
+    "backend/science/data/affordance_models/L091/lgbm_model.pkl": {
+      "hash": "9f5575fec8cb2c90d88e2b14477d82772f7dffc9e43808ebf42629a1d4ed5b35",
+      "size": 171232
+    },
+    "backend/science/data/affordance_models/L091/lgbm_indicators_model.pkl": {
+      "hash": "2268195d4b3e4379bb1ec16b309f7edbfe372b00d063441df747ffae53865e6f",
+      "size": 251443
+    },
+    "backend/science/data/affordance_models/L091/test_metrics.json": {
+      "hash": "d4909046999ee59a3f43940f5f185f5f18ae874302b85a9b3ec3c4b9f4573eb1",
+      "size": 87
+    },
+    "backend/science/data/affordance_models/L091/best_params.json": {
+      "hash": "18f9da59e739d585c9f061c439720875b448bde0ac54a20118a44aaaffe378a0",
+      "size": 339
+    },
+    "backend/models/science_runs.py": {
+      "hash": "fbe1a64fc36dd153fe97d0c829d6cf39d0cc0a088c2eee3a1905786dacf29878",
+      "size": 5593
     },
     "backend/models/annotation.py": {
       "hash": "bff521bb8a5a384cd931571a51c77192ef622011ada7298fb3259bd8c04f7352",
@@ -174,8 +306,8 @@
       "size": 1192
     },
     "backend/models/__init__.py": {
-      "hash": "a86eddb98c73d8157df573d0293516136752a5fec8401e01ff0fc5d313b0328d",
-      "size": 760
+      "hash": "4f8e8f5339df34a305e1d2ec7f79c9e1e871a99c15532df487ad7a02fcc8b719",
+      "size": 931
     },
     "backend/models/jobs.py": {
       "hash": "263fed45c253481bc5261d56798d39635ef26ffa46e0ab80f2404d965108d058",
@@ -194,8 +326,8 @@
       "size": 10628
     },
     "backend/api/v1_discovery.py": {
-      "hash": "110bf1293a4fc42cdaf2dd5e7f1ab2b32d621507353ca0e8706ab66656b61607",
-      "size": 4603
+      "hash": "ac255e0e3871fbfec43867c552ff91225a3d32f6be07146664e7de93e44877b7",
+      "size": 26159
     },
     "backend/api/__init__.py": {
       "hash": "95ca21760c0e54aaa779f58966f119a05048a633940bceec4142881eaebf111b",
@@ -218,12 +350,16 @@
       "size": 18291
     },
     "backend/api/v1_debug.py": {
-      "hash": "85f084f0c3c8f534330ad99b0032e217f48561a7247ac9c2e49ced8bcefae7e7",
-      "size": 11510
+      "hash": "95d5647895aa461ddf098ed154f49016f44b35334e3a05516cee720ff3d517f8",
+      "size": 51441
     },
     "backend/api/v1_vlm_health.py": {
       "hash": "ee5cf15d938e67c64c09acb24fe8092d77f767407d33820774e4297b4e1efe19",
       "size": 4192
+    },
+    "backend/services/science_runs.py": {
+      "hash": "a130e2f834e61bf6477b02f465834c77267f7324f7dea2c0e0dbf687174706d6",
+      "size": 11637
     },
     "backend/services/auth.py": {
       "hash": "8096183830c7672bf7a48072cd130991f37babefaa4bca44e5391a3ef2dfbb10",
@@ -242,7 +378,7 @@
       "size": 26
     },
     "backend/services/vlm.py": {
-      "hash": "f844d2ba96d55d0d2ebb1e1882bf36ace138dc7ba5f7c15d5d714e6f65f79e3d",
+      "hash": "7dc62819506c5b2c956fd14fed5e8906a925b8253515fedc170831c82203196c",
       "size": 16589
     },
     "backend/services/storage.py": {
@@ -281,6 +417,10 @@
       "hash": "efd37f82d6192ec62447c2c98f4d769f223ff4adac66229df5ca564fa5b4253e",
       "size": 2560
     },
+    "scripts/__init__.py": {
+      "hash": "e07fd52d7daa1c57a0b1a852e43b7cc57776d2a5a27a1ebe791e76ffa656b169",
+      "size": 42
+    },
     "scripts/program_integrity_guard.py": {
       "hash": "294c9ace4ac61c3b7bb299b14776679bf927aca4f336ff4ea75b1c4bcea8b0f1",
       "size": 2912
@@ -302,8 +442,8 @@
       "size": 8608
     },
     "scripts/guardian.py": {
-      "hash": "a07aa9dfcaf85858a797a07bf17ee8857d14d11e863f4c3fe0f904140a25a7ec",
-      "size": 10037
+      "hash": "eeeda0bb6b0327a9e8eebda6c9f4b2cbe97a362e132af2b99a9f5d407cca7864",
+      "size": 10103
     },
     "scripts/bn_add_cog_affect_bins.py": {
       "hash": "ae38d8893eac6749feeca352a2ff28e3821475f4f03b7b091af7e5604aa58e40",
@@ -358,8 +498,8 @@
       "size": 313
     },
     "frontend/shared/src/api-client.js": {
-      "hash": "d412db48d4e9b653dbce2565f2c50c13f84f3fb60572810ed39ab2bcfbc92d60",
-      "size": 2700
+      "hash": "90ba5e8a9e38b2697e0e43d5d529e9ff9c9c25ad1674504fdeee0bd6baa42b63",
+      "size": 2800
     },
     "frontend/shared/src/components/Header.jsx": {
       "hash": "63cc0a782cbbb773496002c1fe1bc3533cff032997e8c3519cee90ee48a481c2",
@@ -385,6 +525,10 @@
       "hash": "32395ae9780efe876b0c1fd7bcf583bbe8b6a98e3ab3f30c30c23edf135b3c10",
       "size": 343
     },
+    "frontend/apps/monitor/tailwind.config.js": {
+      "hash": "8fa3afea206075d787494712f898c7329151871cde173a75bd8cb5c548d7983c",
+      "size": 364
+    },
     "frontend/apps/monitor/vite.config.js": {
       "hash": "a6389be299f08218b06ab249c9b9c3ebd8d022214503f963890fb36ea6e17ac7",
       "size": 269
@@ -393,9 +537,17 @@
       "hash": "79ccdfecb5f3b574f4a46faf9edfb5a0c69f81b9a09aa08460d4b4e5ad45af85",
       "size": 149
     },
+    "frontend/apps/monitor/postcss.config.js": {
+      "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
+      "size": 80
+    },
     "frontend/apps/admin/index.html": {
       "hash": "37620e963b95668174bc0af8fa959f0ce906c329b1a20a7d33bbf931f4ccb8ff",
       "size": 337
+    },
+    "frontend/apps/admin/tailwind.config.js": {
+      "hash": "8fa3afea206075d787494712f898c7329151871cde173a75bd8cb5c548d7983c",
+      "size": 364
     },
     "frontend/apps/admin/vite.config.js": {
       "hash": "a6389be299f08218b06ab249c9b9c3ebd8d022214503f963890fb36ea6e17ac7",
@@ -405,9 +557,17 @@
       "hash": "13db837fbb95386f00424858c8c020d3f35b6fa091cfe6fd2ce0e99e52f902cf",
       "size": 147
     },
+    "frontend/apps/admin/postcss.config.js": {
+      "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
+      "size": 80
+    },
     "frontend/apps/explorer/index.html": {
       "hash": "12db1e86c2b229a0e0ca1f3a39351867e624f738b444d02ab5a9211de041cc4c",
       "size": 354
+    },
+    "frontend/apps/explorer/tailwind.config.js": {
+      "hash": "8fa3afea206075d787494712f898c7329151871cde173a75bd8cb5c548d7983c",
+      "size": 364
     },
     "frontend/apps/explorer/vite.config.js": {
       "hash": "a6389be299f08218b06ab249c9b9c3ebd8d022214503f963890fb36ea6e17ac7",
@@ -417,9 +577,17 @@
       "hash": "2f3a0b177e481b7f203fdaf9649fac27e84dda76c5de0fcb0e4fbc5a6e89bcc3",
       "size": 150
     },
+    "frontend/apps/explorer/postcss.config.js": {
+      "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
+      "size": 80
+    },
     "frontend/apps/workbench/index.html": {
       "hash": "fe20d9404f85762c1cfe70d0fac4f317a6f6e5ddcf0283700ab7b5b534f721c7",
       "size": 358
+    },
+    "frontend/apps/workbench/tailwind.config.js": {
+      "hash": "8fa3afea206075d787494712f898c7329151871cde173a75bd8cb5c548d7983c",
+      "size": 364
     },
     "frontend/apps/workbench/vite.config.js": {
       "hash": "a6389be299f08218b06ab249c9b9c3ebd8d022214503f963890fb36ea6e17ac7",
@@ -428,6 +596,10 @@
     "frontend/apps/workbench/package.json": {
       "hash": "ead96376fd9cc3511266c0d7b2bf9435a4f011fff2c79a05236e37f13d0871a5",
       "size": 151
+    },
+    "frontend/apps/workbench/postcss.config.js": {
+      "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
+      "size": 80
     },
     "frontend/apps/monitor/src/main.jsx": {
       "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
@@ -453,13 +625,17 @@
       "hash": "46d81de0a08211bac1fd5465ba1b6dc83924580484f3787ef5f8bb1361880442",
       "size": 47210
     },
+    "frontend/apps/explorer/src/ImageDetailModal.jsx": {
+      "hash": "9fa25b2366b373ffd7bceb70e6ea6bbe2b1be5e90028b2e46e867d8f0f0caa46",
+      "size": 45022
+    },
     "frontend/apps/explorer/src/main.jsx": {
       "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
       "size": 373
     },
     "frontend/apps/explorer/src/App.jsx": {
-      "hash": "c77d85c1de46f175b2ee7cb03ad2b70a0323f3dd991dd0350693cf274d27edd6",
-      "size": 22193
+      "hash": "0bcd9afea646b50bb6d2efab92dbf233bcfa63cc79e04a4e3ba9f91def430186",
+      "size": 37765
     },
     "frontend/apps/workbench/src/main.jsx": {
       "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
@@ -483,7 +659,9 @@
     "deploy/Dockerfile.backend",
     "scripts/guardian.py",
     "v3_governance.yml",
-    "README_v3.md",
+    "README.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CONTRACT.md",
     "install.sh",
     "backend/api/v1_admin.py",
     "backend/api/v1_supervision.py",
@@ -500,28 +678,15 @@
     "check_bn_db_health": false
   },
   "root_files": [
+    ".git",
+    ".gitignore",
     "CANONICAL_ANCHOR.json",
-    "CHANGELOG_v3.4.23_tag_inspector.md",
-    "CHANGELOG_v3.4.24_tag_inspector_help.md",
-    "CHANGELOG_v3.4.25_role_help_strips.md",
-    "CHANGELOG_v3.4.27_priority_help.md",
-    "CHANGELOG_v3.4.28_pipeline_health_view.md",
-    "CHANGELOG_v3.4.30_pipeline_health_tests.md",
-    "CHANGELOG_v3.4.31_bn_canon_sanity.md",
-    "CHANGELOG_v3.4.32_restorativeness_H1.md",
-    "CHANGELOG_v3.4.36_upload_guard_and_bn_guard.md",
-    "CHANGELOG_v3.4.60_semantic_tags_vlm.md",
-    "CHANGELOG_v3.4.62_science_tag_coverage_enforced.md",
-    "CHANGELOG_v3.4.63_bn_db_tightening_and_health.md",
-    "CHANGELOG_v3.4.64_bn_db_migration_helper.md",
     "Makefile",
-    "PROJECT_CONSTITUTION.md",
-    "README_v3.md",
-    "STUDENT_START_HERE.md",
+    "README.md",
     "VERSION",
     "auto_install.sh",
     "deconcat.py",
-    "deconcat_v3_3.py",
+    "governance.lock",
     "install.sh",
     "release.keep.yml",
     "requirements-install.txt",

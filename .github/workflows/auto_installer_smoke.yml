@@ -6,6 +6,8 @@ on:
 jobs:
   smoke:
      runs-on: ubuntu-latest
+     env:
+       PYTHONDONTWRITEBYTECODE: "1"
      steps:
        - uses: actions/checkout@v4
        - uses: actions/setup-python@v5
@@ -18,4 +20,4 @@ jobs:
            bash infra/turnkey_installer_v1.3/installer/install.sh || true
        - name: Tests (optional)
          run: |
-           if [ -d tests ]; then python -m pip install pytest || true; pytest -q || true; fi
+           if [ -d tests ]; then python -m pip install pytest || true; PYTHONPATH=. python -m pytest -q || true; fi

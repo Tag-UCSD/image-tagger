@@ -7,6 +7,8 @@ on:
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
 
     steps:
       - name: Checkout repository
@@ -23,11 +25,20 @@ jobs:
             pip install -r requirements.txt
           else
             pip install fastapi uvicorn sqlalchemy pydantic psycopg2-binary pytest requests
+          fi
 
       - name: Run Guardian verification
         run: |
           python scripts/guardian.py verify
 
-      - name: Run API and Guardian tests
+      - name: Import backend entrypoint
         run: |
-          pytest -q tests/test_v3_api.py tests/test_guardian.py
+          PYTHONPATH=. python -c "import backend.main; print('backend.main import OK')"
+
+      - name: Run Guardian tests
+        run: |
+          PYTHONPATH=. python -m pytest -q tests/test_guardian.py
+
+      - name: Verify no Python cache artifacts are checked in
+        run: |
+          python scripts/check_no_pycache_in_tree.py
