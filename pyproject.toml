@@ -1,0 +1,5 @@
+[project]
+name = "image-tagger"
+version = "3.4.74"
+description = "Image tagging and classification system"
+requires-python = ">=3.10"
