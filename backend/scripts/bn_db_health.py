@@ -15,8 +15,8 @@ It is intended to be run either:
 
     (or equivalently: ``python backend/scripts/bn_db_health.py``)
 
-  - or via the governance guardian when
-    ``constraints.check_bn_db_health`` is enabled in v3_governance.yml.
+The legacy Guardian gate that used to call this checker was archived before
+Track A/B work. Keep this helper as an explicit, manual backend diagnostic.
 """
 from __future__ import annotations
 

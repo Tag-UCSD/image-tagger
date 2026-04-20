@@ -29,45 +29,6 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Governance check (Guardian)
-echo "🧬 Running structural hollow-repo guard"
-${PYTHON_CMD} scripts/hollow_repo_guard.py || { echo "❌ Hollow Repo Guard failed"; exit 1; }
-
-echo "🧪 Running program integrity guard"
-${PYTHON_CMD} scripts/program_integrity_guard.py || { echo "❌ Program Integrity Guard failed"; exit 1; }
-echo "🧯 Running syntax guard"
-
-${PYTHON_CMD} scripts/syntax_guard.py || { echo "❌ Syntax Guard failed"; exit 1; }
-
-echo "🪝 Running critical import guard"
-
-${PYTHON_CMD} scripts/critical_import_guard.py || { echo "❌ Critical Import Guard failed"; exit 1; }
-
-
-echo "🧪 Running canon guard"
-${PYTHON_CMD} scripts/canon_guard.py || { echo "❌ Canon Guard failed"; exit 1; }
-
-echo "🔒 Running Guardian (governance) checks"
-if command -v ${PYTHON_CMD} &> /dev/null; then
-    if [ -f "governance.lock" ]; then
-        ${PYTHON_CMD} scripts/guardian.py verify
-        GUARDIAN_RC=$?
-        if [ "$GUARDIAN_RC" -ne 0 ]; then
-            echo "❌ Guardian verification failed (rc=$GUARDIAN_RC). Aborting install."
-            exit $GUARDIAN_RC
-        fi
-    else
-        echo "⚠️ governance.lock not found; creating initial baseline with 'guardian.py freeze'."
-        ${PYTHON_CMD} scripts/guardian.py freeze
-        if [ "$?" -ne 0 ]; then
-            echo "❌ Guardian freeze failed. Aborting install."
-            exit 1
-        fi
-    fi
-else
-    echo "⚠️ ${PYTHON_CMD} not found; skipping Guardian checks."
-fi
-
 # Security warning: detect default API_SECRET and warn user
 DEFAULT_API_SECRET="dev_secret_key_change_me"
 if [ "${API_SECRET:-$DEFAULT_API_SECRET}" = "$DEFAULT_API_SECRET" ]; then
@@ -108,7 +69,3 @@ if [ "$?" -ne 0 ]; then
     exit 1
 fi
 echo "✅ Pytest API smoketests passed."
-
-# --- GO / NO-GO checks (v3.4.36 additions) ---
-echo "[go-check] Running BN naming guard (non-fatal)..."
-$PYTHON_CMD -m backend.science.bn_naming_guard || echo "[go-check] bn_naming_guard completed with warnings."

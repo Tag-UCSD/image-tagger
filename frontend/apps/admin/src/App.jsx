@@ -554,12 +554,9 @@ function VLMHealthCard() {
 
             {!loading && (!runs || runs.length === 0) && (
                 <p className="text-[11px] text-gray-500">
-                    No VLM health runs found yet. After you run{' '}
-                    <code className="bg-gray-100 px-1 py-[1px] rounded text-[10px]">
-                        make vlm-health-init
-                    </code>{' '}
-                    and the follow-up steps from the VLM Health Quickstart,
-                    runs will appear here.
+                    No VLM health runs found. The legacy VLM-health Makefile
+                    workflow is archived for Phase 1, so this panel is
+                    informational until that workflow is reintroduced.
                 </p>
             )}
 
