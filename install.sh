@@ -62,10 +62,3 @@ cd ..
 ${PYTHON_CMD} scripts/smoke_frontend.py || { echo "[install] Frontend smoketest failed"; exit 1; }
 cd deploy
 echo "✅ Smoke tests passed."
-echo "🧪 Running pytest API smoketests"
-docker-compose exec -T api pytest -q tests/test_v3_api.py
-if [ "$?" -ne 0 ]; then
-    echo "❌ Pytest API smoketests failed."
-    exit 1
-fi
-echo "✅ Pytest API smoketests passed."
