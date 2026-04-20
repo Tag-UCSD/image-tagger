@@ -9,7 +9,7 @@ class Attribute(Base):
     """
     Attribute taxonomy entry.
 
-    Ported from v2.6.3 contracts/attributes.yml into a proper SQLAlchemy model
+    Ported from v2.6.3 backend/science/data/attributes.yml into a proper SQLAlchemy model
     so downstream tools (Explorer, Tag Inspector, science pipeline) can reason
     over a shared attribute registry.
     """

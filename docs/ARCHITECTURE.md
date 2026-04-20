@@ -16,7 +16,9 @@ legacy changelogs, exploratory scraping, and mined source docs live only under
 SQLAlchemy models, schemas, database utilities, scripts, tests, and the science
 pipeline. The science stack includes deterministic CV and math analyzers, room
 detection, optional materials enrichment hooks, canonical run tracking, and
-structured artifacts surfaced to the product through API responses.
+structured artifacts surfaced to the product through API responses. Tracked
+science reference data, including the attribute taxonomy seed file, lives under
+`backend/science/data/`.
 
 ## Frontend
 `frontend/` is a React monorepo with four apps under `frontend/apps/`:

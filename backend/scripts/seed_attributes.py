@@ -1,7 +1,7 @@
 """
 Seed script for attribute taxonomy.
 
-Reads contracts/attributes.yml (v2.6.3-compatible format) and inserts
+Reads backend/science/data/attributes.yml (v2.6.3-compatible format) and inserts
 Attribute rows into the v3 database if they are missing.
 
 Intended usage (from repo root):
@@ -26,7 +26,7 @@ from backend.models import Base, Attribute
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ATTRIBUTES_YML = REPO_ROOT / "contracts" / "attributes.yml"
+ATTRIBUTES_YML = REPO_ROOT / "backend" / "science" / "data" / "attributes.yml"
 
 
 def parse_attributes(lines: List[str]) -> List[Dict[str, Any]]:

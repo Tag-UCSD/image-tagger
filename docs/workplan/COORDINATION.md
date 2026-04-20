@@ -2,7 +2,7 @@
 
 **1. Are frontend and backend concerns physically mixed in the same files?**
 
-No — not within individual files. The inventory shows clean file-level separation: Python modules live under `backend/` and React/Vite code lives under `frontend/apps/*`. There is no evidence of JSX imported into Python or of backend logic embedded in frontend components. However, *structural* mixing exists at the repository root: `backend/`, `frontend/`, `scripts/`, `tests/`, `docs/`, `deploy/`, `infra/`, `ai/`, `contracts/`, `governance/`, `archive/`, `scrapping/`, and twenty-odd changelog markdown files all sit at the top level of `Image_Tagger_3.4.74_vlm_lab_TL_runbook_full/`, alongside two sibling projects (`TRS_v1.1`, `biophilia-index-main`) that further dilute the boundary.
+No — not within individual files. The inventory shows clean file-level separation: Python modules live under `backend/` and React/Vite code lives under `frontend/apps/*`. There is no evidence of JSX imported into Python or of backend logic embedded in frontend components. However, pre-restructure *structural* mixing existed at the repository root: `backend/`, `frontend/`, `scripts/`, `tests/`, `docs/`, `deploy/`, `infra/`, `ai/`, `contracts/`, `governance/`, `archive/`, `scrapping/`, and twenty-odd changelog markdown files all sat at the top level of `Image_Tagger_3.4.74_vlm_lab_TL_runbook_full/`, alongside two sibling projects (`TRS_v1.1`, `biophilia-index-main`) that further diluted the boundary. The former root `contracts/attributes.yml` seed source now lives at `backend/science/data/attributes.yml`.
 
 **2. Is there an identifiable folder boundary between frontend and backend?**
 
