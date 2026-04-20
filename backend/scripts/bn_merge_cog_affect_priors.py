@@ -1,7 +1,7 @@
 """BN helper: merge cognitive/affective priors into a base priors CSV.
 
 Usage:
-    python scripts/bn_merge_cog_affect_priors.py
+    python backend/scripts/bn_merge_cog_affect_priors.py
 
 Assumes:
     - Existing priors CSV at data/BN_PRIORS_BASE.csv

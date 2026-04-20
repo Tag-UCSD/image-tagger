@@ -9,6 +9,7 @@ protected_scopes:
   - "backend/models"
   - "backend/api"
   - "backend/services"
+  - "backend/scripts"
   - "scripts"
   - "frontend/shared"
   - "frontend/apps"
@@ -34,8 +35,8 @@ critical_files:
   - "backend/api/v1_supervision.py"
   - "backend/api/v1_discovery.py"
   - "backend/schemas/supervision.py"
-  - "scripts/smoke_api.py"
-  - "scripts/smoke_science.py"
+  - "backend/scripts/smoke_api.py"
+  - "backend/scripts/smoke_science.py"
   - "tests/test_v3_api.py"
 
 constraints:

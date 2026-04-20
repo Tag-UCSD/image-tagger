@@ -125,7 +125,7 @@ def _check_science_tag_coverage(constraints: Dict[str, Any], failures: List[str]
     if not cov_path.exists():
         failures.append(
             "Science tag coverage: science_tag_coverage_v1.json is missing; "
-            "run `python scripts/generate_tag_coverage.py` before verifying."
+            "run `python backend/scripts/generate_tag_coverage.py` before verifying."
         )
         return
 

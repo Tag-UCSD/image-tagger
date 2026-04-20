@@ -189,6 +189,10 @@
       "hash": "e6c5680ddf2ebe51ee36380d83fe3a6b7041cac669b448b49aa1ecee4141b189",
       "size": 1871
     },
+    "backend/science/data/attributes.yml": {
+      "hash": "0f6f2bb71094e3f0e3cae0a46ff0a9ce18c91cc6b7a3e8ef0b8d742e5c698cae",
+      "size": 11847
+    },
     "backend/science/data/affordance_models/affordance_definitions.json": {
       "hash": "0fe26e273f71d2efd156d58e145402bfa408c22bb67af2146145e0c86eea292b",
       "size": 20085
@@ -294,8 +298,8 @@
       "size": 2451
     },
     "backend/models/attribute.py": {
-      "hash": "2a1a6f45f126faa175a92c8474ba4db5747d4d2ebcbd8c321619b7167beb3c07",
-      "size": 1298
+      "hash": "363cd4cede70edbd37f8c7d148915f5479d120e139d79e51b63b9ec5ef501252",
+      "size": 1309
     },
     "backend/models/config.py": {
       "hash": "9855095a98fc4c733ed27acfd4401dcf545f3bd19ea1523f0da8b710ec6b4160",
@@ -397,25 +401,81 @@
       "hash": "f35a15147a20f273ee6635dd6c32f3d4a2af10a96aa3d7489b07099c0826df38",
       "size": 1578
     },
-    "scripts/smoke_frontend.py": {
-      "hash": "3d73db44e4961a1c2da427dc5dbf5a6aa37360d44930f7447b20d88dddadf4b7",
-      "size": 2926
+    "backend/scripts/run_upload_job.py": {
+      "hash": "fe4124e03ae5951ba0e4e50f37bc12836fd03227d50298a2185a0418b2c05431",
+      "size": 1030
     },
-    "scripts/run_upload_job.py": {
-      "hash": "ab6281dd7bbc205e6bf58c850baf1dd716d86f60aeb0f570811d5b35fc8c932b",
-      "size": 1014
+    "backend/scripts/import_images_from_json.py": {
+      "hash": "c3e0ddd221690977111fed40021b0a1d3faf9942a67f4937351cb6d85791a20b",
+      "size": 5098
     },
-    "scripts/run_science_on_sample.py": {
+    "backend/scripts/run_science_on_sample.py": {
       "hash": "7b4d84a75a41a62ae877f9177d63b5b551b232796a0de31f3155951618dfa439",
       "size": 1245
     },
-    "scripts/export_bn_glossary.py": {
+    "backend/scripts/export_bn_glossary.py": {
       "hash": "15dbf19bbf0cf467fb532034a99944b659083558d763a45b2e71188f96f95bee",
       "size": 1113
     },
-    "scripts/smoke_science.py": {
+    "backend/scripts/migrate_3_4_63_add_validation_fk.py": {
+      "hash": "2f3b952e96719f819550ce0358c03a7203c5aaa08f9c4a9cba892e09b07ae7a8",
+      "size": 4413
+    },
+    "backend/scripts/smoke_science.py": {
       "hash": "efd37f82d6192ec62447c2c98f4d769f223ff4adac66229df5ca564fa5b4253e",
       "size": 2560
+    },
+    "backend/scripts/migrate_3_4_74_add_science_tables.py": {
+      "hash": "0c4478160ea6f055b30f9d917bea186d8cfd60227c84c85ebfb669efe2ac9a88",
+      "size": 9502
+    },
+    "backend/scripts/__init__.py": {
+      "hash": "0abfbb0d147352ff8795ed2e1e60fead939967994b4a997a9a8f34834ed4c9ac",
+      "size": 43
+    },
+    "backend/scripts/smoke_api.py": {
+      "hash": "251df770f5519adb642671231969174e085d639fb6062ce5677030e98dae98cd",
+      "size": 1370
+    },
+    "backend/scripts/seed_attributes.py": {
+      "hash": "fa2f04c822218259635d584bf243cacd064ed58301e945dcf71598248fb482e1",
+      "size": 3662
+    },
+    "backend/scripts/bn_merge_cog_affect_priors.py": {
+      "hash": "3519d659670fb2259a9c7dc4b9edd2d4e1548a781c1cd21bd2da7b3027c3a289",
+      "size": 1731
+    },
+    "backend/scripts/backfill_science_runs.py": {
+      "hash": "c338a27b00be79b04c6dade7b8895c11c741aeb9a599f65b97dc427439e66b5b",
+      "size": 8591
+    },
+    "backend/scripts/audit_vlm_variance.py": {
+      "hash": "f9107a836af1f49310ad0daca1ed38f4371d3bc68851ef1251bd7070e59d5950",
+      "size": 3746
+    },
+    "backend/scripts/bn_add_cog_affect_bins.py": {
+      "hash": "29b81da60c9bc185f1cd9a93d6af3e9b57f1cbc7d60a9258364c9a98042cdba5",
+      "size": 2174
+    },
+    "backend/scripts/bn_db_health.py": {
+      "hash": "0dab7e3330e4942845efaa24c504f674f96b8489f814ba0387adc826ad2f8db6",
+      "size": 4465
+    },
+    "backend/scripts/export_bn_ready_dataset.py": {
+      "hash": "5647ec09d57fe9a374752052a23312f6119af54594ea691615163d852eac4975",
+      "size": 1210
+    },
+    "backend/scripts/generate_tag_coverage.py": {
+      "hash": "2d09ba316c260c0d44f3608cf29d7f362b1562bbd1359ba81e5ea87f5fc3204b",
+      "size": 10796
+    },
+    "backend/scripts/seed_tool_configs.py": {
+      "hash": "4b14a71a3d382c02363b59693cf42add3b7bcf5ca773a49d3e3d6dca002e2d23",
+      "size": 2231
+    },
+    "scripts/smoke_frontend.py": {
+      "hash": "3d73db44e4961a1c2da427dc5dbf5a6aa37360d44930f7447b20d88dddadf4b7",
+      "size": 2926
     },
     "scripts/__init__.py": {
       "hash": "e07fd52d7daa1c57a0b1a852e43b7cc57776d2a5a27a1ebe791e76ffa656b169",
@@ -425,41 +485,21 @@
       "hash": "294c9ace4ac61c3b7bb299b14776679bf927aca4f336ff4ea75b1c4bcea8b0f1",
       "size": 2912
     },
-    "scripts/smoke_api.py": {
-      "hash": "251df770f5519adb642671231969174e085d639fb6062ce5677030e98dae98cd",
-      "size": 1370
-    },
     "scripts/hollow_repo_guard.py": {
       "hash": "1eed40f00d67a6b2986cdae13d745e8852f7a3b9571b85cfa2be360e413b33f0",
       "size": 2124
-    },
-    "scripts/bn_merge_cog_affect_priors.py": {
-      "hash": "613977d6c6668ffc0c56dd9d7b910703a15e6ae0079c476f1084b3f97b60d234",
-      "size": 1723
     },
     "scripts/audit_vlm_variance.py": {
       "hash": "f69b299938b71a94d66eb2b2e871db392aa03fbe11006cee265a70e661c96444",
       "size": 8608
     },
     "scripts/guardian.py": {
-      "hash": "eeeda0bb6b0327a9e8eebda6c9f4b2cbe97a362e132af2b99a9f5d407cca7864",
-      "size": 10103
-    },
-    "scripts/bn_add_cog_affect_bins.py": {
-      "hash": "ae38d8893eac6749feeca352a2ff28e3821475f4f03b7b091af7e5604aa58e40",
-      "size": 2166
+      "hash": "18bf4518a8a7c390e4649226be1de23d1d44fc8f05b4f521b7079fc528c25f15",
+      "size": 10111
     },
     "scripts/critical_import_guard.py": {
       "hash": "5bbca04163d99e214278d3914e4736716a3b16fce1332d11ad1785e82014ca34",
       "size": 1775
-    },
-    "scripts/export_bn_ready_dataset.py": {
-      "hash": "5647ec09d57fe9a374752052a23312f6119af54594ea691615163d852eac4975",
-      "size": 1210
-    },
-    "scripts/generate_tag_coverage.py": {
-      "hash": "b25ae30c62e5292b6c4ebcd75830d44b10ae764d1e585719d605e6c5a44185a5",
-      "size": 10780
     },
     "scripts/canon_guard.py": {
       "hash": "7d727d8a5eef41c11449d90f95139c330122d0a2e8f6033cc050e6eb4749eadd",
@@ -667,8 +707,8 @@
     "backend/api/v1_supervision.py",
     "backend/api/v1_discovery.py",
     "backend/schemas/supervision.py",
-    "scripts/smoke_api.py",
-    "scripts/smoke_science.py",
+    "backend/scripts/smoke_api.py",
+    "backend/scripts/smoke_science.py",
     "tests/test_v3_api.py"
   ],
   "constraints": {
@@ -688,6 +728,7 @@
     "deconcat.py",
     "governance.lock",
     "install.sh",
+    "pyproject.toml",
     "release.keep.yml",
     "requirements-install.txt",
     "science_tag_coverage_v1.json",

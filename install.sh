@@ -88,13 +88,13 @@ echo "✅ SYSTEM ONLINE at http://localhost:8080"
 
 
 echo "🧪 Running smoke tests (API + Science)"
-docker-compose exec -T api python3 scripts/smoke_api.py
+docker-compose exec -T api python3 backend/scripts/smoke_api.py
 echo "Running science smoke test (advisory)..."
 docker-compose exec -T api \
-  python -m scripts.smoke_science || echo "[install] WARNING: science smoketest failed (likely empty DB or misconfigured pipeline) – continuing."
+  python -m backend.scripts.smoke_science || echo "[install] WARNING: science smoketest failed (likely empty DB or misconfigured pipeline) – continuing."
 # Optional second pass inside the API container; failures are treated as advisory.
 docker-compose exec -T api \
-  python scripts/smoke_science.py || echo "[install] smoke_science (second pass) failed – continuing as advisory."
+  python backend/scripts/smoke_science.py || echo "[install] smoke_science (second pass) failed – continuing as advisory."
 
 echo "[install] Running frontend smoketest..."
 cd ..
@@ -112,4 +112,3 @@ echo "✅ Pytest API smoketests passed."
 # --- GO / NO-GO checks (v3.4.36 additions) ---
 echo "[go-check] Running BN naming guard (non-fatal)..."
 $PYTHON_CMD -m backend.science.bn_naming_guard || echo "[go-check] bn_naming_guard completed with warnings."
-

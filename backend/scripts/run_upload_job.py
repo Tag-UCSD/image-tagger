@@ -2,9 +2,9 @@
 """Run a single upload job's science pipeline.
 
 Usage:
-    python -m scripts.run_upload_job <job_id>
+    python -m backend.scripts.run_upload_job <job_id>
     or
-    python scripts/run_upload_job.py <job_id>
+    python backend/scripts/run_upload_job.py <job_id>
 
 This script is a thin wrapper around `backend.services.upload_jobs.run_upload_job`.
 It is intended for use by a worker process in more advanced deployments.

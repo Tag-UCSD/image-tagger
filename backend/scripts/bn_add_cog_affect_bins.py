@@ -1,7 +1,7 @@
 """BN helper: add discrete cognitive/affective bins to a BN snapshot CSV.
 
 Usage:
-    python scripts/bn_add_cog_affect_bins.py
+    python backend/scripts/bn_add_cog_affect_bins.py
 
 Assumes:
     - Input snapshot at data/bn_snapshot_raw.csv
