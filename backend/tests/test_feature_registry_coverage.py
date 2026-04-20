@@ -16,7 +16,7 @@ from pathlib import Path
 from backend.science import feature_stubs
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _load_registry_keys() -> set[str]:
