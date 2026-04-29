@@ -41,40 +41,49 @@ class AnnotationService:
         return result
 
     def create_validation(self, user_id: int, data: ValidationRequest) -> Validation:
+        """Record a human judgment.
+
+        Mutating writes are wrapped in ``try/except`` with explicit
+        ``self.db.rollback()`` on failure (Task A-4) so the session is
+        never left in a half-committed state when the caller catches
+        the re-raised exception.
         """
-        Records a human judgment.
-        """
-        # TODO: Add check for existing validation to prevent duplicates?
-        # For high-speed tagging, we might accept duplicates and filter later, 
-        # or upsert. Here we append.
-        
         new_val = Validation(
             user_id=user_id,
             image_id=data.image_id,
             attribute_key=data.attribute_key,
             value=data.value,
-            duration_ms=data.duration_ms
+            duration_ms=data.duration_ms,
         )
-        
+
         self.db.add(new_val)
-        self.db.commit()
+        try:
+            self.db.commit()
+        except Exception as exc:
+            self.db.rollback()
+            logger.exception("create_validation: commit failed: %s", exc)
+            raise
         self.db.refresh(new_val)
-        
         return new_val
 
     def create_region(self, user_id: int, data: RegionCreateRequest) -> Region:
-        """
-        Records a manual segmentation (bounding box/polygon).
+        """Record a manual segmentation (bounding box / polygon).
+
+        Mutating writes are wrapped in ``try/except`` with explicit
+        ``self.db.rollback()`` on failure (Task A-4).
         """
         new_region = Region(
             image_id=data.image_id,
             geometry=data.geometry,
             manual_label=data.manual_label,
-            # We verify that the image exists via FK constraint in DB
         )
-        
+
         self.db.add(new_region)
-        self.db.commit()
+        try:
+            self.db.commit()
+        except Exception as exc:
+            self.db.rollback()
+            logger.exception("create_region: commit failed: %s", exc)
+            raise
         self.db.refresh(new_region)
-        
         return new_region

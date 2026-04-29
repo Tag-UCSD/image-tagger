@@ -24,7 +24,7 @@ from typing import List, Optional
 from pathlib import Path
 
 import cv2
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 import numpy as np
 import requests
 from sqlalchemy.orm import Session
@@ -134,7 +134,14 @@ def _compute_and_cache_affordance_payload(image: Image, db: Session) -> dict:
     meta[_AFFORDANCE_CACHE_KEY] = payload
     image.meta_data = meta
     db.add(image)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.exception(
+            "affordance_cache: commit failed for image %s: %s", image.id, exc
+        )
+        raise
     db.refresh(image)
     return payload
 
@@ -146,40 +153,81 @@ def _get_or_compute_affordance_payload(image: Image, db: Session) -> dict:
     return _compute_and_cache_affordance_payload(image, db)
 
 
+# --------------------------------------------------------------------------
+# Explorer search — both GET (contract-canonical, query-string driven) and
+# POST (legacy body-driven) handlers share the implementation below. Input
+# validation is performed via FastAPI's ``Query`` constraints / the Pydantic
+# ``SearchQuery`` schema; runtime clamping has been removed (Task A-4).
+# --------------------------------------------------------------------------
+
+
+@router.get("/search", response_model=List[ImageSearchResult])
+def search_images_get(
+    db: Session = Depends(get_db),
+    q: Optional[str] = Query(default=None, max_length=500, alias="q"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    room_type: Optional[str] = Query(default=None, max_length=100),
+    tag: Optional[str] = Query(default=None, max_length=200),
+) -> List[ImageSearchResult]:
+    """Anonymous public-read search (per /docs/CONTRACT.md).
+
+    Negative or zero ``page`` / out-of-range ``page_size`` produce a 422
+    ``VALIDATION_ERROR`` via the global handler in
+    ``backend.error_handlers``. ``room_type`` and ``tag`` are accepted
+    today but currently unused by the underlying lookup; they are
+    declared so the contract-shaped query string is rejected when any
+    free-text filter exceeds its declared length cap.
+    """
+    return _run_search(db=db, text=q, page=page, page_size=page_size)
+
+
 @router.post("/search", response_model=List[ImageSearchResult])
 def search_images(
     payload: SearchQuery,
     db: Session = Depends(get_db),
 ) -> List[ImageSearchResult]:
-    """Search for images matching the query.
+    """Body-form variant of explorer search.
 
-    This minimal implementation supports:
-      - free-text search over image name / description (if available), or
-      - returning a simple paginated list when no filter is provided.
+    Kept alongside the GET endpoint so existing frontend callers that
+    POST a body continue to work. Schema-level constraints on
+    ``SearchQuery`` (see ``backend/schemas/discovery.py``) drive
+    validation; the route no longer performs runtime clamping.
+    """
+    return _run_search(
+        db=db,
+        text=getattr(payload, "text", None) or getattr(payload, "query_string", None),
+        page=payload.page,
+        page_size=payload.page_size,
+    )
 
-    The exact ranking can be improved later; for now we favour determinism
-    and well-formed responses over sophistication.
+
+def _run_search(
+    *,
+    db: Session,
+    text: Optional[str],
+    page: int,
+    page_size: int,
+) -> List[ImageSearchResult]:
+    """Shared search implementation used by both GET and POST handlers.
+
+    All input clamping has moved to the schema/Query constraints so this
+    function can assume ``page`` and ``page_size`` are already valid.
     """
     # Lazy import to avoid circular dependencies
     from backend.models.assets import Image  # type: ignore
 
     q = db.query(Image)
 
-    if getattr(payload, "text", None):
-        text = f"%{payload.text}%"
-        # Try to filter by name / description if those fields exist.
-        # We guard each attribute access with hasattr to avoid hard failures
-        # across slightly different schemas.
+    if text:
+        like = f"%{text}%"
         name_col = getattr(Image, "name", None)
         desc_col = getattr(Image, "description", None)
         if name_col is not None and desc_col is not None:
-            q = q.filter((name_col.ilike(text)) | (desc_col.ilike(text)))
+            q = q.filter((name_col.ilike(like)) | (desc_col.ilike(like)))
         elif name_col is not None:
-            q = q.filter(name_col.ilike(text))
+            q = q.filter(name_col.ilike(like))
 
-    # Use page/page_size from schema (frontend sends these)
-    page = max(1, getattr(payload, "page", 1))
-    page_size = max(1, min(getattr(payload, "page_size", 48), 200))
     offset = (page - 1) * page_size
     q = q.order_by(getattr(Image, "id")).offset(offset).limit(page_size)
 

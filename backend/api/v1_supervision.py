@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -175,22 +175,16 @@ def _build_restorativeness_heuristic_node(features: List[Dict[str, object]]):
 
 @router.get("/velocity", response_model=List[TaggerPerformance])
 def get_velocity(
-    window_hours: int = 24,
+    window_hours: int = Query(default=24, ge=1, le=24 * 30),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> List[TaggerPerformance]:
     """Aggregate tagger velocity over a recent time window.
 
-    The default window is the last 24 hours. The query aggregates:
-
-      * number of distinct images validated per tagger
-      * average dwell time (duration_ms) for those validations
-
-    This endpoint drives the team velocity table in the Supervisor GUI.
+    Window bounds are enforced via FastAPI's ``Query`` constraints
+    (Task A-4) — a non-positive or unbounded value is rejected with a
+    ``VALIDATION_ERROR`` response instead of being silently clamped.
     """
-    if window_hours <= 0:
-        window_hours = 24
-
     cutoff = datetime.utcnow() - timedelta(hours=window_hours)
 
     rows = (
@@ -226,24 +220,16 @@ def get_velocity(
 
 @router.get("/irr", response_model=List[IRRStat])
 def get_irr(
-    window_hours: int = 72,
+    window_hours: int = Query(default=72, ge=1, le=24 * 30),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> List[IRRStat]:
     """Compute a simple IRR metric from overlapping validations.
 
-    For each (image_id, attribute_key) pair with 2+ validations in the
-    given time window, we compute:
-
-      * pairwise agreement ratio between raters (exact value match)
-      * conflict_count = number of disagreeing pairs
-
-    This is intentionally conservative and easy to interpret, rather than
-    a full Fleiss' κ implementation.
+    Per-pair agreement is the average exact-value match ratio between
+    raters; ``window_hours`` bounds are enforced at the schema layer
+    (Task A-4).
     """
-    if window_hours <= 0:
-        window_hours = 72
-
     cutoff = datetime.utcnow() - timedelta(hours=window_hours)
 
     rows = (

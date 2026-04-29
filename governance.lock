@@ -21,6 +21,18 @@
       "hash": "d569a585a51fad85dc43770fe3c1f375902d61493c694e02f4ff303559334f96",
       "size": 5529665
     },
+    "backend/database/__pycache__/core.cpython-311.pyc": {
+      "hash": "414b3e75a7d9f4d20e79add8d58ca2f6a35f0932e88a2dc60af353fbbb70e588",
+      "size": 1558
+    },
+    "backend/database/__pycache__/mixins.cpython-311.pyc": {
+      "hash": "d5170ca6be1f6768909b1bda9e98a3bc51367e511c0604d6f971afa4f521edef",
+      "size": 1315
+    },
+    "backend/database/__pycache__/__init__.cpython-311.pyc": {
+      "hash": "f22c464f0fe5b822ec0981bbf3cf09462498c42d6164a63e9554028539848009",
+      "size": 321
+    },
     "backend/science/features_registry.py": {
       "hash": "e5582362affe751c16d3564ad226a38bbdc493aceb903aba45c5c80b1cf7b7ea",
       "size": 2870
@@ -93,6 +105,14 @@
       "hash": "b0f8cb05f07ec1bd4b0176b922afe5857cb0c120a97361899e40d0578dc077bb",
       "size": 6074
     },
+    "backend/science/context/__pycache__/cognitive.cpython-311.pyc": {
+      "hash": "dd8534a26e6188a10dab20e7a3d686641381acff4a37dcc78224c8662f486a3e",
+      "size": 6795
+    },
+    "backend/science/context/__pycache__/affordance.cpython-311.pyc": {
+      "hash": "dd8f699949859ea21efb6d1bded6c63ca9b921928039519e8392097ab7f3ba15",
+      "size": 42572
+    },
     "backend/science/vision/materials.py": {
       "hash": "a84ec3b3f849a1951673c2df38e2500795a61eb9f623523c407d94f43c1f469e",
       "size": 30764
@@ -117,6 +137,54 @@
       "hash": "12b5c6bfce6d6b9c63435e3b60342d636e23c6ed654a5bc994b7bd658c5653d8",
       "size": 22662
     },
+    "backend/science/vision/__pycache__/materials.cpython-311.pyc": {
+      "hash": "d1bf9820e327bcd3590d4810627c049deb4a91141e0a7a72f6c068850622ff05",
+      "size": 42027
+    },
+    "backend/science/vision/__pycache__/mask2former.cpython-311.pyc": {
+      "hash": "66538f602e27197b96d985f5d3910612df119548a1a89dbdbea44189566e37bf",
+      "size": 8906
+    },
+    "backend/science/vision/__pycache__/segmentation.cpython-311.pyc": {
+      "hash": "38f54d89d012430b75ebf3b479a36fdbe73f8850eadd7f21fece79a868e63a54",
+      "size": 33219
+    },
+    "backend/science/vision/__pycache__/clip_material.cpython-311.pyc": {
+      "hash": "ee7d90eaee9aad992f59f83f810916c65a8de808c9377a155b7c3a73ebbd0611",
+      "size": 22615
+    },
+    "backend/science/vision/__pycache__/room_detection.cpython-311.pyc": {
+      "hash": "2e4a087ff1f2cf4734962306fedbf945f84e168500e535b9cb2809a750ce1031",
+      "size": 34207
+    },
+    "backend/science/vision/__pycache__/__init__.cpython-311.pyc": {
+      "hash": "c18574224f1b9b74e47b332dcbb8df0fe1aa734483b7288338bb6d6a69c895cd",
+      "size": 761
+    },
+    "backend/science/__pycache__/index_catalog.cpython-311.pyc": {
+      "hash": "d5b031088342c5de1b7a4d0da1ec9f7976f520afa3b6de5bf7fbd1ec5fc80378",
+      "size": 2751
+    },
+    "backend/science/__pycache__/core.cpython-311.pyc": {
+      "hash": "17832ee542fce20ce2db263c5d1ba93b0dc0ba7ab2849d00fac61b7c4d73c457",
+      "size": 2838
+    },
+    "backend/science/__pycache__/features_registry.cpython-311.pyc": {
+      "hash": "18235bc60bc8df53bbae7178044496b5b3716615302e8c0ff433c244c9d5133c",
+      "size": 5084
+    },
+    "backend/science/__pycache__/pipeline.cpython-311.pyc": {
+      "hash": "57450056f99fd1a3584df731536e2862d3f29b919c993d482eff4894bc37944a",
+      "size": 23582
+    },
+    "backend/science/__pycache__/biophilia.cpython-311.pyc": {
+      "hash": "71bf4e6f4128d53fc9675b0ea99bf2721597e473cac9c6a5f2e34d08fa7a01c7",
+      "size": 2755
+    },
+    "backend/science/__pycache__/__init__.cpython-311.pyc": {
+      "hash": "1b2fc5718a43c499a8a8b4eed6a6e6a14a235eef605724aa5b83a22e2d800245",
+      "size": 181
+    },
     "backend/science/semantics/arch_parts_vlm.py": {
       "hash": "296f1701573a026fbc27d0736b550102687a8800b413a3784d757d7f9482b8ae",
       "size": 2216
@@ -136,6 +204,10 @@
     "backend/science/semantics/ontology.py": {
       "hash": "3ad6a9c3d1f0e9993ba2499b6298c255ee80abed01de4a0577e4284a6e65ce64",
       "size": 1271
+    },
+    "backend/science/semantics/__pycache__/semantic_tags_vlm.cpython-311.pyc": {
+      "hash": "c4fb2dee9dca1affc011fa4f3b57491bdcb415dacecd0e7a3cde3c8e73f30f9b",
+      "size": 9187
     },
     "backend/science/math/symmetry.py": {
       "hash": "09e1ab5b2847a645d732cfb727e77db13d41272e5189c0464687204f3b074e38",
@@ -173,6 +245,34 @@
       "hash": "463771caab33af0bc14f5c5568dcf81d3a200a9cc7a508fa66cedb2874f85e0b",
       "size": 2896
     },
+    "backend/science/math/__pycache__/color.cpython-311.pyc": {
+      "hash": "202429381493c3293543deb3e0b8c39aaee81b9f92a399b53967e1dd43991f27",
+      "size": 3060
+    },
+    "backend/science/math/__pycache__/symmetry.cpython-311.pyc": {
+      "hash": "b4ac1d68f470d5a4708f864a42c074cbcaea6f4b61a2cda21a38067ee8de6165",
+      "size": 4080
+    },
+    "backend/science/math/__pycache__/fluency.cpython-311.pyc": {
+      "hash": "8d415d8f9f9e0780fdca099c4a8d460db94f1da86c01957c7e5a45b332a8143b",
+      "size": 3258
+    },
+    "backend/science/math/__pycache__/naturalness.cpython-311.pyc": {
+      "hash": "9fb96a13d13fe7b2489cebe85bfe6dec4ca323ca477483de9324fae12174f317",
+      "size": 4387
+    },
+    "backend/science/math/__pycache__/glcm.cpython-311.pyc": {
+      "hash": "2495143b6b3781a43514783d9e799353180ee42db09c012e1a4a54a2d2027788",
+      "size": 2779
+    },
+    "backend/science/math/__pycache__/fractals.cpython-311.pyc": {
+      "hash": "56ca1e5b11765c54eba41c942339b0978d8662a7f3deab6e09f09e0f388a50e5",
+      "size": 3271
+    },
+    "backend/science/math/__pycache__/complexity.cpython-311.pyc": {
+      "hash": "86fe2fb9bce0e9f4c649529c2dd08d2d61731ad5d9d7bde6efebf8b85ec42173",
+      "size": 3942
+    },
     "backend/science/spatial/isovist_25d.py": {
       "hash": "234a458dcb239057a850a71591511543e94d413b0cedda49c29b6b5c21391c15",
       "size": 1732
@@ -188,6 +288,10 @@
     "backend/science/spatial/isovist.py": {
       "hash": "e6c5680ddf2ebe51ee36380d83fe3a6b7041cac669b448b49aa1ecee4141b189",
       "size": 1871
+    },
+    "backend/science/spatial/__pycache__/depth.cpython-311.pyc": {
+      "hash": "fef31d9c81b3537663f553893541dc71bb6dc11a1f5f5e5248bc4dbaf5e8cd31",
+      "size": 14164
     },
     "backend/science/data/affordance_models/affordance_definitions.json": {
       "hash": "0fe26e273f71d2efd156d58e145402bfa408c22bb67af2146145e0c86eea292b",
@@ -321,13 +425,49 @@
       "hash": "2731efaeb0d8fd50f2b53605dfd46b72c383b1b1ee638471878c957b280fbdda",
       "size": 1152
     },
+    "backend/models/__pycache__/annotation.cpython-311.pyc": {
+      "hash": "0bd946c0e4011ed9ca42c137d8b7013dbbe4a00f1bdd0786ffd3a9dc15ba055e",
+      "size": 2846
+    },
+    "backend/models/__pycache__/jobs.cpython-311.pyc": {
+      "hash": "a738102fbe2c86e3729c24b375252392e56190af1616ad01c7f48eeedb8b4575",
+      "size": 3690
+    },
+    "backend/models/__pycache__/config.cpython-311.pyc": {
+      "hash": "f81995889ddbc43e6e6ce12fa095a43f175078712e20e96ef5285841e2270e33",
+      "size": 1837
+    },
+    "backend/models/__pycache__/users.cpython-311.pyc": {
+      "hash": "0dfc9db293b944d2e51a3408ab885559e26561c98e2702753e497565cc091e0c",
+      "size": 1978
+    },
+    "backend/models/__pycache__/usage.cpython-311.pyc": {
+      "hash": "d768fb89c0792a514fa4bb9743da5d950bb472070235543f27182e6fc36293ab",
+      "size": 1779
+    },
+    "backend/models/__pycache__/attribute.cpython-311.pyc": {
+      "hash": "bca1cb95ba3c923041f5f5b9ce4a1e89a8f349ed028467d54758fca8691e69e5",
+      "size": 2542
+    },
+    "backend/models/__pycache__/science_runs.cpython-311.pyc": {
+      "hash": "04f859145d41aa4475c87697b2d98cc70ad160595d07aeabf168eafe9f9de1de",
+      "size": 7238
+    },
+    "backend/models/__pycache__/__init__.cpython-311.pyc": {
+      "hash": "798999418e1bf4857636f80a6df32674f0ddbb82b06a9c92f52cec0360f366ea",
+      "size": 1304
+    },
+    "backend/models/__pycache__/assets.cpython-311.pyc": {
+      "hash": "bbde6a5b582efed8b3b29599a90f5b7a69f4ba2ff01ba5edbaf0c59bf2020d49",
+      "size": 2920
+    },
     "backend/api/v1_bn_export.py": {
       "hash": "eafb69356b9ea7117b5717e407215c79425aa8203dac4a81ddea0132bb85df58",
       "size": 10628
     },
     "backend/api/v1_discovery.py": {
-      "hash": "ac255e0e3871fbfec43867c552ff91225a3d32f6be07146664e7de93e44877b7",
-      "size": 26159
+      "hash": "421dbd4ff44c13d4c14d5390363cf74397492b235f96f96195ef83dcdda86425",
+      "size": 27752
     },
     "backend/api/__init__.py": {
       "hash": "95ca21760c0e54aaa779f58966f119a05048a633940bceec4142881eaebf111b",
@@ -338,16 +478,16 @@
       "size": 2437
     },
     "backend/api/v1_supervision.py": {
-      "hash": "07f514add81533f497bbf9f0c1d32765df91cd7a9290f7892e61da4cf7034183",
-      "size": 16141
+      "hash": "41353781169394131f76ec57a207bdceda3310c4666c9ca13bcc3ee64dce5d4e",
+      "size": 15871
     },
     "backend/api/v1_features.py": {
       "hash": "686e64f1996b339bc8d9409eb21f40090605992a57a1d56eae507ecc681dd345",
       "size": 2480
     },
     "backend/api/v1_admin.py": {
-      "hash": "8c838d7a6eee63a0e83cb82bc9255db0d2795dec4f0d5eb8597c769a12b26755",
-      "size": 18291
+      "hash": "adaa0ac8ef0c31ef28435691082fe93af9d20e93c308ca611489f65c637a2291",
+      "size": 21422
     },
     "backend/api/v1_debug.py": {
       "hash": "95d5647895aa461ddf098ed154f49016f44b35334e3a05516cee720ff3d517f8",
@@ -357,17 +497,53 @@
       "hash": "ee5cf15d938e67c64c09acb24fe8092d77f767407d33820774e4297b4e1efe19",
       "size": 4192
     },
+    "backend/api/__pycache__/v1_admin.cpython-311.pyc": {
+      "hash": "fe3671024442c8b7ce596304fac6234df8ae025582632c5d35ad9e722a361a9b",
+      "size": 30337
+    },
+    "backend/api/__pycache__/v1_discovery.cpython-311.pyc": {
+      "hash": "e5b98f7433e8c29ec545ed828d0612b1d7b5e5ade24e4dbac4de2c82c96e66c3",
+      "size": 38242
+    },
+    "backend/api/__pycache__/v1_supervision.cpython-311.pyc": {
+      "hash": "0f3be35a91fdc23affc9cef58d216bf1fddf641336e0d4302ecdfaab4ed5faa9",
+      "size": 20155
+    },
+    "backend/api/__pycache__/v1_vlm_health.cpython-311.pyc": {
+      "hash": "1417f3ba3c0f16375b492802cf221ff1a389333b2115c34e528aec8af7d83708",
+      "size": 6453
+    },
+    "backend/api/__pycache__/v1_bn_export.cpython-311.pyc": {
+      "hash": "b73cf9552d75685edee7d77c68bdaa99671ad6c9e314398f989fedc460b79563",
+      "size": 12969
+    },
+    "backend/api/__pycache__/v1_annotation.cpython-311.pyc": {
+      "hash": "009078e4fb7915f81193c9e9fbf19a329c6a93202d6fbfc5cf1099848108aa3f",
+      "size": 3611
+    },
+    "backend/api/__pycache__/v1_debug.cpython-311.pyc": {
+      "hash": "4ccb71c6bbb24c03711e7fb02f365322f7de3311718b3400387d3de036960220",
+      "size": 62735
+    },
+    "backend/api/__pycache__/v1_features.cpython-311.pyc": {
+      "hash": "84627a7369d494a3f97ae22a6316959db6141287047824d38f9c715309686c94",
+      "size": 3819
+    },
+    "backend/api/__pycache__/__init__.cpython-311.pyc": {
+      "hash": "facafa4caf439c46c9e9655f4c6496b91fca7e93baa2c3e45b0e9be011a2d390",
+      "size": 177
+    },
     "backend/services/science_runs.py": {
-      "hash": "a130e2f834e61bf6477b02f465834c77267f7324f7dea2c0e0dbf687174706d6",
-      "size": 11637
+      "hash": "a47d0b35360807cea1cd3e63622e006af5921f997996eec0d41d6375b0856ba2",
+      "size": 12141
     },
     "backend/services/auth.py": {
-      "hash": "8096183830c7672bf7a48072cd130991f37babefaa4bca44e5391a3ef2dfbb10",
-      "size": 2423
+      "hash": "18f17a81a0d01460fa826158737e5648fc2c98d4918bd76d0be4ec86c80a9690",
+      "size": 7166
     },
     "backend/services/annotation.py": {
-      "hash": "8e1ba99d70598476d62db1e82e8af6b6ee16eb35e477838e0e49e4654e3f5440",
-      "size": 2739
+      "hash": "180d8de142fe7dd0e8881be50548b5923d318a16e8afa96194f0f5203fec43c3",
+      "size": 3126
     },
     "backend/services/query_builder.py": {
       "hash": "b25cf5dbc9bbeda45d3342d82f1961bbdf979e85c0040c6dc3db18ec15f29ca1",
@@ -390,12 +566,40 @@
       "size": 1995
     },
     "backend/services/upload_jobs.py": {
-      "hash": "702e5d67de595455a1f472b57b1476c860df6ebdddf921bc01daf9f1ed01c833",
-      "size": 4361
+      "hash": "2386bac247960933e6b2eae686076f25ca6a8614457a38478ba244c76595f20c",
+      "size": 4742
     },
     "backend/services/training_export.py": {
       "hash": "f35a15147a20f273ee6635dd6c32f3d4a2af10a96aa3d7489b07099c0826df38",
       "size": 1578
+    },
+    "backend/services/__pycache__/annotation.cpython-311.pyc": {
+      "hash": "790bf7a4c708d52755615a7b77982fa63a1fb7021f6c66e207b950a4ac8993f8",
+      "size": 5356
+    },
+    "backend/services/__pycache__/storage.cpython-311.pyc": {
+      "hash": "a0525becb18fb4235d6d79b0074bbda211d7b19ebb0685a6d87b9e6f93d75428",
+      "size": 3934
+    },
+    "backend/services/__pycache__/costs.cpython-311.pyc": {
+      "hash": "4e4d2e43fbd601dd91dce629e68ca5b644456ef420a394869ed9af8755eabd6b",
+      "size": 3584
+    },
+    "backend/services/__pycache__/vlm.cpython-311.pyc": {
+      "hash": "2e60f4b18a77a88c41c572dc03a78df8e6a1712650a188aa77d7659beed4e6c5",
+      "size": 20714
+    },
+    "backend/services/__pycache__/auth.cpython-311.pyc": {
+      "hash": "8b80da22ca5d0d227f8ddd2755e46761a51b81712d5985fa68357477651ca759",
+      "size": 8942
+    },
+    "backend/services/__pycache__/training_export.cpython-311.pyc": {
+      "hash": "5183586cdede0d843cd465a43d28aa565496264a765ede8a74d6ba27b6abb2f5",
+      "size": 2614
+    },
+    "backend/services/__pycache__/__init__.cpython-311.pyc": {
+      "hash": "3edabaa2b0949dc416a22aee0057513fa36637e5d132842158c37b3c286bb533",
+      "size": 182
     },
     "scripts/smoke_frontend.py": {
       "hash": "3d73db44e4961a1c2da427dc5dbf5a6aa37360d44930f7447b20d88dddadf4b7",
@@ -541,6 +745,14 @@
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
     },
+    "frontend/apps/monitor/src/main.jsx": {
+      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
+      "size": 373
+    },
+    "frontend/apps/monitor/src/App.jsx": {
+      "hash": "43b452c6752e0ceee093be61664abcb58a5fde99c9ad3395c56df6a28483d2ba",
+      "size": 39980
+    },
     "frontend/apps/admin/index.html": {
       "hash": "37620e963b95668174bc0af8fa959f0ce906c329b1a20a7d33bbf931f4ccb8ff",
       "size": 337
@@ -560,6 +772,22 @@
     "frontend/apps/admin/postcss.config.js": {
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
+    },
+    "frontend/apps/admin/public/feature_navigator.html": {
+      "hash": "34e053df7aa74954b21abd14ebc5cbf4d41fac41f373933dec1a436657bc7caf",
+      "size": 38447
+    },
+    "frontend/apps/admin/public/feature_onboarding.html": {
+      "hash": "2531b0e0427affe6ebdc5d5d5ebad87ada036492c9d90b96e20f8032f580ab72",
+      "size": 2717
+    },
+    "frontend/apps/admin/src/main.jsx": {
+      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
+      "size": 373
+    },
+    "frontend/apps/admin/src/App.jsx": {
+      "hash": "46d81de0a08211bac1fd5465ba1b6dc83924580484f3787ef5f8bb1361880442",
+      "size": 47210
     },
     "frontend/apps/explorer/index.html": {
       "hash": "12db1e86c2b229a0e0ca1f3a39351867e624f738b444d02ab5a9211de041cc4c",
@@ -581,6 +809,18 @@
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
     },
+    "frontend/apps/explorer/src/ImageDetailModal.jsx": {
+      "hash": "9fa25b2366b373ffd7bceb70e6ea6bbe2b1be5e90028b2e46e867d8f0f0caa46",
+      "size": 45022
+    },
+    "frontend/apps/explorer/src/main.jsx": {
+      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
+      "size": 373
+    },
+    "frontend/apps/explorer/src/App.jsx": {
+      "hash": "0bcd9afea646b50bb6d2efab92dbf233bcfa63cc79e04a4e3ba9f91def430186",
+      "size": 37765
+    },
     "frontend/apps/workbench/index.html": {
       "hash": "fe20d9404f85762c1cfe70d0fac4f317a6f6e5ddcf0283700ab7b5b534f721c7",
       "size": 358
@@ -600,42 +840,6 @@
     "frontend/apps/workbench/postcss.config.js": {
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
-    },
-    "frontend/apps/monitor/src/main.jsx": {
-      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
-      "size": 373
-    },
-    "frontend/apps/monitor/src/App.jsx": {
-      "hash": "43b452c6752e0ceee093be61664abcb58a5fde99c9ad3395c56df6a28483d2ba",
-      "size": 39980
-    },
-    "frontend/apps/admin/public/feature_navigator.html": {
-      "hash": "34e053df7aa74954b21abd14ebc5cbf4d41fac41f373933dec1a436657bc7caf",
-      "size": 38447
-    },
-    "frontend/apps/admin/public/feature_onboarding.html": {
-      "hash": "2531b0e0427affe6ebdc5d5d5ebad87ada036492c9d90b96e20f8032f580ab72",
-      "size": 2717
-    },
-    "frontend/apps/admin/src/main.jsx": {
-      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
-      "size": 373
-    },
-    "frontend/apps/admin/src/App.jsx": {
-      "hash": "46d81de0a08211bac1fd5465ba1b6dc83924580484f3787ef5f8bb1361880442",
-      "size": 47210
-    },
-    "frontend/apps/explorer/src/ImageDetailModal.jsx": {
-      "hash": "9fa25b2366b373ffd7bceb70e6ea6bbe2b1be5e90028b2e46e867d8f0f0caa46",
-      "size": 45022
-    },
-    "frontend/apps/explorer/src/main.jsx": {
-      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
-      "size": 373
-    },
-    "frontend/apps/explorer/src/App.jsx": {
-      "hash": "0bcd9afea646b50bb6d2efab92dbf233bcfa63cc79e04a4e3ba9f91def430186",
-      "size": 37765
     },
     "frontend/apps/workbench/src/main.jsx": {
       "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
@@ -678,7 +882,7 @@
     "check_bn_db_health": false
   },
   "root_files": [
-    ".git",
+    ".env.example",
     ".gitignore",
     "CANONICAL_ANCHOR.json",
     "Makefile",
@@ -688,6 +892,7 @@
     "deconcat.py",
     "governance.lock",
     "install.sh",
+    "pyproject.toml",
     "release.keep.yml",
     "requirements-install.txt",
     "science_tag_coverage_v1.json",

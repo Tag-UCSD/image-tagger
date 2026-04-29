@@ -56,6 +56,7 @@ from sqlalchemy.orm import sessionmaker
 from backend.database.core import Base, get_db
 from backend.main import app
 from backend.services.auth import JWT_ALGORITHM
+from backend.settings import settings as _app_settings
 
 
 # --------------------------------------------------------------------------
@@ -84,7 +85,20 @@ client = TestClient(app)
 # --------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------
-def _mint_jwt(role: str, *, sub: str | None = None, secret: str = TEST_JWT_SECRET) -> str:
+def _server_secret() -> str:
+    """Return the secret the running app actually has bound on its settings.
+
+    ``backend.settings`` resolves the secret once at import time. When
+    this module is collected after another test module that already set
+    its own ``SUPABASE_JWT_SECRET`` env var, the live ``settings``
+    singleton is bound to the *first* secret seen. Minting against
+    ``settings.supabase_jwt_secret`` keeps these tests deterministic
+    regardless of collection order.
+    """
+    return _app_settings.supabase_jwt_secret or TEST_JWT_SECRET
+
+
+def _mint_jwt(role: str, *, sub: str | None = None, secret: str | None = None) -> str:
     """Mint a Supabase-shaped JWT with the role claim required by A-3."""
     now = int(time.time())
     claims = {
@@ -95,7 +109,7 @@ def _mint_jwt(role: str, *, sub: str | None = None, secret: str = TEST_JWT_SECRE
         "iat": now,
         "exp": now + 3600,
     }
-    return jwt.encode(claims, secret, algorithm=JWT_ALGORITHM)
+    return jwt.encode(claims, secret or _server_secret(), algorithm=JWT_ALGORITHM)
 
 
 def _tamper_signature(token: str) -> str:

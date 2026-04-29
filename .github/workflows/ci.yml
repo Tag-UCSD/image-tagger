@@ -24,7 +24,10 @@ jobs:
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
-            pip install fastapi uvicorn sqlalchemy pydantic psycopg2-binary pytest requests
+            pip install \
+              fastapi uvicorn sqlalchemy pydantic psycopg2-binary pytest requests \
+              pydantic-settings structlog "python-jose[cryptography]" \
+              httpx PyYAML
           fi
 
       - name: Run Guardian verification

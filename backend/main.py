@@ -4,6 +4,7 @@ from typing import Callable
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from backend.error_handlers import register_exception_handlers
 from backend.logging_config import configure_logging, get_logger
 from backend.middleware.request_context import RequestContextMiddleware
 from backend.services.storage import get_image_storage_root
@@ -83,6 +84,12 @@ if settings.enable_legacy_prefixes:
 # access log captures the full request lifetime including prefix
 # rewriting.
 app.add_middleware(RequestContextMiddleware)
+
+# Global exception handlers — every error response is shaped to the
+# contract envelope { error: { code, message, request_id, details? } }.
+# Registered after middleware so the request id contextvar is bound by
+# the time a handler runs.
+register_exception_handlers(app)
 
 # Router wiring
 app.include_router(v1_annotation.router)
