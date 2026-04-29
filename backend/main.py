@@ -1,10 +1,13 @@
-import os
+from contextlib import asynccontextmanager
 from typing import Callable
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from backend.logging_config import configure_logging, get_logger
+from backend.middleware.request_context import RequestContextMiddleware
 from backend.services.storage import get_image_storage_root
+from backend.settings import settings
 from backend.api import (
     v1_annotation,
     v1_admin,
@@ -16,6 +19,25 @@ from backend.api import (
     v1_vlm_health,
 )
 from backend.versioning import VERSION
+
+# Configure structured logging before the app is constructed so any
+# import-time logger calls already use the JSON formatter.
+configure_logging(settings.log_level)
+logger = get_logger("backend.main")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Fail fast when a production deployment is missing required secrets.
+    # No-op in development/staging; see backend/settings.py::Settings.
+    settings.assert_production_ready()
+    logger.info(
+        "backend.startup",
+        environment=settings.environment,
+        version=VERSION,
+    )
+    yield
+    logger.info("backend.shutdown")
 
 # v3 Enterprise Application Entry Point
 class PrefixStripMiddleware:
@@ -43,9 +65,10 @@ app = FastAPI(
     version=VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
-if os.getenv("ENABLE_LEGACY_PREFIXES", "1").lower() not in {"0", "false"}:
+if settings.enable_legacy_prefixes:
     app.add_middleware(
         PrefixStripMiddleware,
         prefixes=[
@@ -53,6 +76,13 @@ if os.getenv("ENABLE_LEGACY_PREFIXES", "1").lower() not in {"0", "false"}:
             "/api",
         ],
     )
+
+# Request-id + access-log middleware. Added last so it wraps every other
+# middleware (Starlette executes the most-recently-added middleware
+# outermost), guaranteeing X-Request-ID is set on every response and the
+# access log captures the full request lifetime including prefix
+# rewriting.
+app.add_middleware(RequestContextMiddleware)
 
 # Router wiring
 app.include_router(v1_annotation.router)

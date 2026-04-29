@@ -6,6 +6,11 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Local environment (Task A-1) — never commit real secrets.
+.env
+.env.local
+.env.*.local
+
 # Agent/AI-related files
 .claude/
 CLAUDE.md

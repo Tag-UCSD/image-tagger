@@ -8,7 +8,10 @@ database + training export service. It exposes three main endpoints:
 - POST /v1/explorer/export
 - GET  /v1/explorer/attributes
 
-All endpoints are RBAC-protected for taggers (and above).
+Per `/docs/CONTRACT.md` and Task A-3, every Explorer route is anonymous
+public-read. Authentication dependencies must NOT be added to anything
+under this router; the workbench, monitor, and admin routers carry the
+JWT-protected paths instead.
 """
 
 from __future__ import annotations
@@ -27,7 +30,6 @@ import requests
 from sqlalchemy.orm import Session
 
 from backend.database.core import get_db, SessionLocal
-from backend.services.auth import require_tagger
 from backend.services.training_export import TrainingExporter
 from backend.schemas.training import TrainingExample
 from backend.schemas.discovery import (
@@ -148,7 +150,6 @@ def _get_or_compute_affordance_payload(image: Image, db: Session) -> dict:
 def search_images(
     payload: SearchQuery,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> List[ImageSearchResult]:
     """Search for images matching the query.
 
@@ -268,7 +269,6 @@ def search_images(
 def export_training_data(
     payload: ExportRequest,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> List[TrainingExample]:
     """Export training examples for the given image IDs.
 
@@ -290,7 +290,6 @@ def export_training_data(
 @router.get("/attributes", response_model=List[AttributeRead])
 def list_attributes(
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> List[AttributeRead]:
     """Return the attribute registry for Explorer filters.
 
@@ -305,7 +304,6 @@ def list_attributes(
 def get_image_detail(
     image_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> ImageDetailResult:
     """Return the full detail payload for the single-image viewer modal.
 
@@ -559,7 +557,6 @@ def get_image_detail(
 def bootstrap_science(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> BootstrapResponse:
     """Queue missing canonical science runs for all images.
 
@@ -585,7 +582,6 @@ def bootstrap_science(
 @router.get("/science/status", response_model=ScienceStatusResponse)
 def science_status(
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> ScienceStatusResponse:
     """Return aggregate progress for the active canonical science version."""
     from backend.services.science_runs import get_science_status
@@ -642,7 +638,6 @@ def _run_pending_science_jobs() -> None:
 def get_image_affordance(
     image_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ):
     image = db.query(Image).filter(Image.id == image_id).first()
     if image is None:
@@ -659,7 +654,6 @@ def get_image_affordance(
 def seed_sample_images(
     payload: Optional[dict] = None,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ):
     """Seed the DB with bundled sample image URLs from google_images_import.json.
 
