@@ -27,7 +27,8 @@ jobs:
             pip install \
               fastapi uvicorn sqlalchemy pydantic psycopg2-binary pytest requests \
               pydantic-settings structlog "python-jose[cryptography]" \
-              httpx PyYAML
+              httpx PyYAML \
+              numpy opencv-python-headless
           fi
 
       - name: Run Guardian verification
