@@ -691,6 +691,7 @@
     "pyproject.toml",
     "release.keep.yml",
     "requirements-install.txt",
+    "requirements.txt",
     "science_tag_coverage_v1.json",
     "v3_governance.yml"
   ]
