@@ -22,8 +22,8 @@
       "size": 5529665
     },
     "backend/science/features_registry.py": {
-      "hash": "e5582362affe751c16d3564ad226a38bbdc493aceb903aba45c5c80b1cf7b7ea",
-      "size": 2870
+      "hash": "4ad339a2f7ccf1c08614da6d9cf5563c518f604f37cbb3f6a447b2afc9106a25",
+      "size": 5406
     },
     "backend/science/vision.py": {
       "hash": "6c855f208c009e29861b282144314ffe57da754dc4c1aa8d0bf849a1f43d2d48",
@@ -58,8 +58,8 @@
       "size": 2834
     },
     "backend/science/pipeline.py": {
-      "hash": "398fa24d8ecdc6f67f3bea8853a3ed53e90a11bff2609b7c8d10baa53412b827",
-      "size": 20589
+      "hash": "7adcdcd19cb7473d5fbad7214951d65001eb46f773699ae524609a33ddead753",
+      "size": 22930
     },
     "backend/science/bn_naming_guard.py": {
       "hash": "4fb78c060e4fd503ef5d939847450d2f439fe85030de7ab940ee1089dd0925e8",
