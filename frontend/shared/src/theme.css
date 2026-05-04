@@ -1,0 +1,25 @@
+/* Image Tagger v3 — design tokens */
+:root {
+  /* Brand */
+  --color-primary:        #2563eb; /* blue-600  — AA on white (bg), AA as text */
+  --color-primary-hover:  #1d4ed8; /* blue-700 */
+  --color-danger:         #dc2626; /* red-600 */
+  --color-danger-hover:   #b91c1c; /* red-700 */
+
+  /* Surfaces */
+  --color-surface:        #f8fafc;
+  --color-surface-dark:   #1e293b;
+  --color-border:         #e2e8f0;
+
+  /* Text */
+  --color-text:           #0f172a; /* slate-900 — 18.1:1 on white */
+  --color-text-muted:     #475569; /* slate-600 — 5.9:1 on white ✓ AA */
+
+  /* Trust badge palette */
+  --color-trust-validated:       #166534; /* green-800 */
+  --color-trust-validated-bg:    #dcfce7; /* green-100 */
+  --color-trust-proxy:           #92400e; /* amber-800 */
+  --color-trust-proxy-bg:        #fef3c7; /* amber-100 */
+  --color-trust-untested:        #991b1b; /* red-800 */
+  --color-trust-untested-bg:     #fee2e2; /* red-100 */
+}

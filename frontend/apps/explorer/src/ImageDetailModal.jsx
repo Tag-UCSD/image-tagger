@@ -1,846 +1,274 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-    X, ChevronLeft, ChevronRight, ShoppingCart, Check,
-    Loader2, AlertCircle, ChevronDown, ChevronUp,
-} from 'lucide-react';
-import { ApiClient } from '@shared';
+import React, { useState, useEffect } from 'react';
+import { Modal, TrustBadge, Skeleton } from '@shared';
+import { Loader2, AlertCircle } from 'lucide-react';
 
-const api = new ApiClient('/api/v1/explorer');
-
-// ─── Debug mode registry ──────────────────────────────────────────────────────
-
-const DEBUG_MODES = [
-    { key: 'none',         label: 'Original',     shortcut: '1', hasEdgeSliders: false, hasOverlaySlider: false, hasSegSlider: false },
-    { key: 'edges',        label: 'Edges',         shortcut: '2', hasEdgeSliders: true,  hasOverlaySlider: false, hasSegSlider: false },
-    { key: 'overlay',      label: 'Overlay',       shortcut: '3', hasEdgeSliders: true,  hasOverlaySlider: true,  hasSegSlider: false },
-    { key: 'depth',        label: 'Depth',         shortcut: '4', hasEdgeSliders: false, hasOverlaySlider: false, hasSegSlider: false },
-    { key: 'complexity',   label: 'Complexity',    shortcut: '5', hasEdgeSliders: true,  hasOverlaySlider: false, hasSegSlider: false },
-    { key: 'segmentation', label: 'Segmentation',  shortcut: '6', hasEdgeSliders: false, hasOverlaySlider: false, hasSegSlider: true  },
-    { key: 'room',         label: 'Room Type',     shortcut: '7', hasEdgeSliders: false, hasOverlaySlider: false, hasSegSlider: false },
-    { key: 'materials',    label: 'Materials',     shortcut: '8', hasEdgeSliders: false, hasOverlaySlider: false, hasSegSlider: false },
-];
-
-const AFFORDANCE_SHORT_LABELS = {
-    L059: 'Sleep',
-    L079: 'Cook',
-    L091: 'Work',
-    L130: 'Talk',
-    L141: 'Yoga',
-};
-
-function buildDebugSrc(img, mode, edgeLow, edgeHigh, segConf) {
-    if (!img) return '';
-    const id = img.id;
-    switch (mode) {
-        case 'edges':        return `/api/v1/debug/images/${id}/edges?t1=${edgeLow}&t2=${edgeHigh}`;
-        case 'depth':        return `/api/v1/debug/images/${id}/depth`;
-        case 'complexity':   return `/api/v1/debug/images/${id}/complexity?t1=${edgeLow}&t2=${edgeHigh}`;
-        case 'segmentation': return `/api/v1/debug/images/${id}/segmentation?conf=${segConf}`;
-        case 'room':         return `/api/v1/debug/images/${id}/room`;
-        case 'materials':    return `/api/v1/debug/images/${id}/materials`;
-        default:             return img.url;
-    }
-}
-
-// ─── Attribute group component ────────────────────────────────────────────────
-
-function AttributeGroup({ prefix, attrs, defaultOpen }) {
-    const [open, setOpen] = useState(defaultOpen);
-
-    return (
-        <div className="border border-gray-100 rounded overflow-hidden mb-1.5">
-            <button
-                className="w-full flex items-center justify-between px-3 py-1.5 bg-gray-50 hover:bg-gray-100 transition-colors"
-                onClick={() => setOpen(v => !v)}
-            >
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    {prefix}
-                </span>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-400">{attrs.length}</span>
-                    {open ? <ChevronUp size={12} className="text-gray-400" /> : <ChevronDown size={12} className="text-gray-400" />}
-                </div>
-            </button>
-
-            {open && (
-                <div className="divide-y divide-gray-50">
-                    {attrs.map(attr => (
-                        <div
-                            key={attr.key}
-                            className="flex items-center gap-2 px-3 py-1 hover:bg-blue-50 group"
-                            title={attr.key}
-                        >
-                            <span className="text-xs text-gray-600 truncate flex-1 font-mono">
-                                {attr.name !== attr.key
-                                    ? attr.name
-                                    : attr.key.split('.').slice(1).join('.')}
-                            </span>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                                {/* Mini bar */}
-                                <div className="w-14 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-blue-500 rounded-full"
-                                        style={{ width: `${Math.min(100, Math.max(0, attr.value * 100))}%` }}
-                                    />
-                                </div>
-                                <span className="text-xs font-mono text-gray-800 w-9 text-right tabular-nums">
-                                    {attr.value.toFixed(2)}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ─── Tag badge with provenance tooltip ───────────────────────────────────────
-
-function TagBadge({ tag }) {
-    const ref = useRef(null);
-    const [tipPos, setTipPos] = useState(null);
-
-    const isPreloaded = tag.source === 'preloaded';
-
-    const showTip = () => {
-        if (!ref.current) return;
-        const r = ref.current.getBoundingClientRect();
-        // Position above the tag; clamp to viewport left edge
-        setTipPos({ top: r.top - 6, left: Math.max(8, r.left) });
-    };
-
-    return (
-        <span
-            ref={ref}
-            onMouseEnter={showTip}
-            onMouseLeave={() => setTipPos(null)}
-            className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded cursor-default select-none transition-colors ${
-                isPreloaded
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-indigo-900 text-indigo-300 ring-1 ring-inset ring-indigo-700 hover:bg-indigo-800'
-            }`}
-        >
-            {tag.label}
-
-            {/* Fixed-position tooltip — escapes any overflow clipping */}
-            {tipPos && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: tipPos.top,
-                        left: tipPos.left,
-                        transform: 'translateY(-100%)',
-                        zIndex: 9999,
-                    }}
-                    className="pointer-events-none w-max max-w-[220px] bg-gray-900 border border-gray-600 rounded shadow-2xl px-2.5 py-2"
-                >
-                    <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 ${isPreloaded ? 'bg-gray-400' : 'bg-indigo-400'}`} />
-                        <span className="text-[10px] font-semibold text-gray-100">{tag.source_label}</span>
-                    </div>
-                    {tag.confidence != null && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                            <div className="flex-1 h-1 bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-indigo-500 rounded-full"
-                                    style={{ width: `${Math.round(tag.confidence * 100)}%` }}
-                                />
-                            </div>
-                            <span className="text-[10px] font-mono text-gray-300 flex-shrink-0">
-                                {Math.round(tag.confidence * 100)}%
-                            </span>
-                        </div>
-                    )}
-                    {tag.attribute_key && (
-                        <div className="text-[9px] font-mono text-indigo-400 mt-1 truncate">
-                            {tag.attribute_key}
-                        </div>
-                    )}
-                </div>
-            )}
-        </span>
-    );
-}
-
-function AffordancePanel({ scores, method }) {
-    if (!scores?.length) return null;
-
-    return (
-        <div className="p-3 border-b border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Affordance Ratings
-                </div>
-                {method && (
-                    <div className="text-[9px] text-gray-500">
-                        {method === 'indicator_lgbm_runtime_vlm' ? 'Model D' : 'Raw LGBM'}
-                    </div>
-                )}
-            </div>
-            <div className="space-y-2">
-                {scores.map(item => {
-                    const pct = ((Number(item.score) - 1) / 6) * 100;
-                    return (
-                        <div key={item.id}>
-                            <div className="flex items-center justify-between text-xs mb-1">
-                                <span className="text-gray-200">{AFFORDANCE_SHORT_LABELS[item.id] || item.label}</span>
-                                <span className="font-mono text-blue-300">{Number(item.score).toFixed(1)} / 7</span>
-                            </div>
-                            <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden">
-                                <div
-                                    className="h-full rounded-full bg-blue-500"
-                                    style={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
-                                />
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-function RoomTypePanel({ roomTags }) {
-    if (!roomTags?.length) return null;
-    const top = roomTags[0];
-    const conf = top.confidence ?? 0;
-
-    return (
-        <div className="p-3 border-b border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Room Type
-                </div>
-                <div className="text-[9px] text-gray-500">Canonical · Vision</div>
-            </div>
-            <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-gray-100 font-medium">{top.label}</span>
-                <span className="font-mono text-emerald-300">{Math.round(conf * 100)}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden">
-                <div
-                    className="h-full rounded-full bg-emerald-500"
-                    style={{ width: `${Math.round(conf * 100)}%` }}
-                />
-            </div>
-        </div>
-    );
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-
-export default function ImageDetailModal({
-    images,
-    initialIndex,
-    debugMode: globalDebugMode,
-    edgeThresholds: globalEdgeThresholds,
-    overlayOpacity: globalOverlayOpacity,
-    segmentationConf: globalSegConf,
-    onClose,
-    onAddToCart,
-    cart,
+/**
+ * ImageDetailModal component for the explorer journey.
+ * Shows full image with Overview, Science Features, and Affordances tabs.
+ */
+export function ImageDetailModal({
+  open,
+  onClose,
+  image,
+  loading = false,
+  error = null,
 }) {
-    const [currentIndex, setCurrentIndex] = useState(initialIndex);
-    const [localDebugMode, setLocalDebugMode] = useState(globalDebugMode || 'none');
-    const [edgeLow, setEdgeLow] = useState(globalEdgeThresholds?.low ?? 50);
-    const [edgeHigh, setEdgeHigh] = useState(globalEdgeThresholds?.high ?? 150);
-    const [overlayOpacity, setOverlayOpacity] = useState(globalOverlayOpacity ?? 0.5);
-    const [segConf, setSegConf] = useState(globalSegConf ?? 0.25);
+  const [activeTab, setActiveTab] = useState('overview');
 
-    const [detail, setDetail] = useState(null);
-    const [detailLoading, setDetailLoading] = useState(false);
-    const [detailError, setDetailError] = useState(null);
-    const [affordanceDetail, setAffordanceDetail] = useState(null);
-    const [affordanceLoading, setAffordanceLoading] = useState(false);
-    const [affordanceError, setAffordanceError] = useState(null);
+  // Reset tab on image change
+  useEffect(() => {
+    setActiveTab('overview');
+  }, [image?.id]);
 
-    const [imgLoading, setImgLoading] = useState(true);
-    const [imgError, setImgError] = useState(false);
-    const [scienceOpen, setScienceOpen] = useState(true);
-    const [humanOpen, setHumanOpen] = useState(true);
+  if (!open) return null;
 
-    const img = images[currentIndex] ?? null;
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'science', label: 'Science Features', visible: image?.science },
+    { id: 'affordances', label: 'Affordances', visible: image?.science?.affordances?.length > 0 },
+  ];
 
-    // ── Fetch detail data when image changes ──────────────────────────────────
-    useEffect(() => {
-        if (!img) return;
-        let cancelled = false;
-        setDetail(null);
-        setDetailLoading(true);
-        setDetailError(null);
+  const visibleTabs = tabs.filter(t => t.visible !== false);
 
-        api.get(`/images/${img.id}/detail`)
-            .then(data => { if (!cancelled) setDetail(data); })
-            .catch(err => { if (!cancelled) setDetailError(err?.message || 'Failed to load details'); })
-            .finally(() => { if (!cancelled) setDetailLoading(false); });
+  return (
+    <Modal open={open} onClose={onClose} title={`Image ${image?.id || ''}`}>
+      <div className="max-h-[80vh] overflow-y-auto flex flex-col gap-4">
+        {/* Error state */}
+        {error && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm"
+          >
+            <AlertCircle size={16} className="text-red-600 mt-0.5 flex-shrink-0" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
 
-        return () => { cancelled = true; };
-    }, [img?.id]);
-
-    useEffect(() => {
-        if (!img) return;
-        let cancelled = false;
-        setAffordanceDetail(null);
-        setAffordanceLoading(true);
-        setAffordanceError(null);
-
-        api.get(`/images/${img.id}/affordance`)
-            .then(data => { if (!cancelled) setAffordanceDetail(data); })
-            .catch(err => { if (!cancelled) setAffordanceError(err?.message || 'Failed to load affordance ratings'); })
-            .finally(() => { if (!cancelled) setAffordanceLoading(false); });
-
-        return () => { cancelled = true; };
-    }, [img?.id]);
-
-    // ── Reset image loading state when source changes ─────────────────────────
-    useEffect(() => {
-        setImgLoading(true);
-        setImgError(false);
-    }, [currentIndex, localDebugMode, edgeLow, edgeHigh, segConf]);
-
-    // ── Lock body scroll ──────────────────────────────────────────────────────
-    useEffect(() => {
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = prev; };
-    }, []);
-
-    // ── Navigation ────────────────────────────────────────────────────────────
-    const goNext = useCallback(() => setCurrentIndex(i => Math.min(i + 1, images.length - 1)), [images.length]);
-    const goPrev = useCallback(() => setCurrentIndex(i => Math.max(i - 1, 0)), []);
-    const toggleCart = useCallback(() => { if (img) onAddToCart(img.id); }, [img, onAddToCart]);
-
-    // ── Keyboard shortcuts ────────────────────────────────────────────────────
-    useEffect(() => {
-        const handler = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            switch (e.key) {
-                case 'Escape':     onClose(); break;
-                case 'ArrowLeft':  goPrev();  break;
-                case 'ArrowRight': goNext();  break;
-                case '1': setLocalDebugMode('none');         break;
-                case '2': setLocalDebugMode('edges');        break;
-                case '3': setLocalDebugMode('overlay');      break;
-                case '4': setLocalDebugMode('depth');        break;
-                case '5': setLocalDebugMode('complexity');   break;
-                case '6': setLocalDebugMode('segmentation'); break;
-                case '7': setLocalDebugMode('room');         break;
-                case '8': setLocalDebugMode('materials');    break;
-                case 'c': case 'C': toggleCart(); break;
-                default: break;
-            }
-        };
-        window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
-    }, [onClose, goPrev, goNext, toggleCart]);
-
-    // ── Derived values ────────────────────────────────────────────────────────
-    const inCart = img ? cart.includes(img.id) : false;
-    const currentMode = DEBUG_MODES.find(m => m.key === localDebugMode) ?? DEBUG_MODES[0];
-
-    const mainSrc = buildDebugSrc(img, localDebugMode, edgeLow, edgeHigh, segConf);
-    const edgesSrc = img ? `/api/v1/debug/images/${img.id}/edges?t1=${edgeLow}&t2=${edgeHigh}` : '';
-
-    const filename = detail?.filename ?? img?.meta_data?.filename ?? (img ? `image_${img.id}` : '');
-
-    // detail.tags is TagInfo[] from the API; img.tags is string[] from the grid search result (fallback).
-    const tags = detail?.tags
-        ?? (img?.tags ?? []).map(t => ({ label: t, source: 'preloaded', source_label: 'Imported with dataset' }));
-    const affordanceScores = affordanceDetail?.affordance_scores ?? detail?.affordance_scores ?? [];
-    const affordanceMethod = affordanceDetail?.affordance_method ?? detail?.affordance_method;
-
-    const groupedAttrs = useMemo(() => {
-        if (!detail?.science_attributes?.length) return [];
-        const groups = {};
-        for (const attr of detail.science_attributes) {
-            const prefix = attr.key.split('.')[0] || 'other';
-            (groups[prefix] = groups[prefix] || []).push(attr);
-        }
-        return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-    }, [detail]);
-
-    const hasScienceData = groupedAttrs.length > 0;
-    const hasHumanData = (detail?.human_validations?.length ?? 0) > 0;
-    const bothBottomPanelsCollapsed = !scienceOpen && !humanOpen;
-    const scienceRun = detail?.science_run ?? null;
-    const canonicalAvailable = detail?.canonical_outputs_available ?? false;
-
-    // Room tags: attribute_key is 'room.type_coarse'; tag_key (not in TagInfo) is 'room_type.*'
-    const roomTags = useMemo(
-        () => (tags ?? []).filter(t =>
-            t.source === 'science_pipeline' &&
-            (t.attribute_key?.startsWith('room.') || t.attribute_key?.startsWith('room_type.'))
-        ),
-        [tags]
-    );
-
-    function scienceEmptyMessage() {
-        if (!scienceRun) {
-            return 'Canonical science outputs have not been generated for this image yet. Explorer bootstrap will queue it for background processing.';
-        }
-        switch (scienceRun.status) {
-            case 'PENDING':  return 'Science run is queued and will begin shortly.';
-            case 'RUNNING':  return 'Science run is in progress — attributes will appear when complete.';
-            case 'FAILED':   return `Science run failed: ${scienceRun.error_message || 'unknown error'}.`;
-            case 'STALE':    return 'Science outputs are stale and will be re-processed on the next bootstrap.';
-            default:         return 'No science attributes have been recorded for this image.';
-        }
-    }
-
-    function scienceRunBadge() {
-        if (!scienceRun) return null;
-        const colours = {
-            PENDING:   'bg-yellow-100 text-yellow-800 border-yellow-300',
-            RUNNING:   'bg-blue-100 text-blue-800 border-blue-300',
-            COMPLETED: 'bg-green-100 text-green-800 border-green-300',
-            FAILED:    'bg-red-100 text-red-800 border-red-300',
-            STALE:     'bg-gray-100 text-gray-600 border-gray-300',
-        };
-        const cls = colours[scienceRun.status] || colours.STALE;
-        return (
-            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${cls}`}>
-                {scienceRun.status}
-            </span>
-        );
-    }
-
-    // ── Render ────────────────────────────────────────────────────────────────
-    return (
-        <div
-            className="fixed inset-0 z-50 flex flex-col bg-black/80"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Image detail: ${filename}`}
-        >
-            {/* Backdrop click to close */}
-            <div className="absolute inset-0 -z-10" onClick={onClose} />
-
-            {/* ── Header bar ────────────────────────────────────────────────── */}
-            <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-gray-900 border-b border-gray-700 text-white min-w-0">
-                {/* Prev */}
-                <button
-                    onClick={goPrev}
-                    disabled={currentIndex === 0}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-sm transition-colors flex-shrink-0"
-                    title="Previous image (←)"
-                >
-                    <ChevronLeft size={15} /> Prev
-                </button>
-
-                {/* Filename + position */}
-                <div className="flex-1 min-w-0 flex items-center justify-center gap-3">
-                    <span className="text-sm font-semibold truncate text-gray-100" title={filename}>
-                        {filename}
-                    </span>
-                    <span className="text-xs text-gray-400 flex-shrink-0">
-                        {currentIndex + 1} / {images.length}
-                    </span>
-                </div>
-
-                {/* Next */}
-                <button
-                    onClick={goNext}
-                    disabled={currentIndex === images.length - 1}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-sm transition-colors flex-shrink-0"
-                    title="Next image (→)"
-                >
-                    Next <ChevronRight size={15} />
-                </button>
-
-                <div className="w-px h-5 bg-gray-600 mx-1 flex-shrink-0" />
-
-                {/* Cart toggle */}
-                <button
-                    onClick={toggleCart}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
-                        inCart
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                            : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                    }`}
-                    title="Toggle cart (C)"
-                >
-                    {inCart ? <Check size={15} /> : <ShoppingCart size={15} />}
-                    {inCart ? 'In Cart' : 'Add to Cart'}
-                </button>
-
-                {/* Close */}
-                <button
-                    onClick={onClose}
-                    className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors flex-shrink-0"
-                    title="Close (Esc)"
-                >
-                    <X size={17} />
-                </button>
+        {/* Loading state */}
+        {loading ? (
+          <div className="space-y-4">
+            <Skeleton className="w-full aspect-video rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
             </div>
+          </div>
+        ) : image ? (
+          <>
+            {/* Full image */}
+            {image.url && (
+              <img
+                src={image.url}
+                alt={`Image ${image.id}`}
+                className="w-full rounded-lg bg-gray-100"
+                style={{ maxHeight: '400px', objectFit: 'cover' }}
+              />
+            )}
 
-            {/* ── Middle: image + right panel ───────────────────────────────── */}
-            <div className="flex flex-1 overflow-hidden min-h-0">
+            {/* Tab navigation */}
+            {visibleTabs.length > 1 && (
+              <div className="flex border-b border-gray-200 gap-4" role="tablist">
+                {visibleTabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={[
+                      'pb-2 px-1 text-sm font-medium border-b-2 transition-colors',
+                      activeTab === tab.id
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-600 hover:text-gray-900',
+                    ].join(' ')}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-                {/* Image display area */}
-                <div className="flex-1 flex items-center justify-center bg-gray-950 relative overflow-hidden min-w-0">
-                    {img && (
-                        <>
-                            {localDebugMode === 'overlay' ? (
-                                <div className="relative w-full h-full">
-                                    <img
-                                        src={img.url}
-                                        alt={filename}
-                                        className="w-full h-full object-contain block"
-                                        onLoad={() => setImgLoading(false)}
-                                        onError={() => { setImgLoading(false); setImgError(true); }}
-                                    />
-                                    <img
-                                        src={edgesSrc}
-                                        alt="Edge overlay"
-                                        className="absolute inset-0 w-full h-full object-contain pointer-events-none mix-blend-screen"
-                                        style={{ opacity: overlayOpacity }}
-                                    />
-                                </div>
-                            ) : (
-                                <img
-                                    key={mainSrc}
-                                    src={mainSrc}
-                                    alt={filename}
-                                    className={`w-full h-full object-contain transition-opacity duration-200 ${
-                                        imgLoading ? 'opacity-0' : 'opacity-100'
-                                    }`}
-                                    onLoad={() => setImgLoading(false)}
-                                    onError={() => { setImgLoading(false); setImgError(true); }}
-                                />
-                            )}
+            {/* Tab content */}
+            {activeTab === 'overview' && (
+              <OverviewTab image={image} />
+            )}
+            {activeTab === 'science' && image.science && (
+              <ScienceFeaturesTab science={image.science} />
+            )}
+            {activeTab === 'affordances' && image.science?.affordances?.length > 0 && (
+              <AffordancesTab affordances={image.science.affordances} />
+            )}
+          </>
+        ) : null}
+      </div>
+    </Modal>
+  );
+}
 
-                            {imgLoading && !imgError && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <Loader2 className="animate-spin text-gray-500" size={40} />
-                                </div>
-                            )}
-
-                            {imgError && !imgLoading && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 gap-2">
-                                    <AlertCircle size={36} />
-                                    <span className="text-sm">
-                                        {localDebugMode !== 'none'
-                                            ? `Debug mode "${currentMode.label}" unavailable for this image`
-                                            : 'Image unavailable'}
-                                    </span>
-                                    {localDebugMode !== 'none' && (
-                                        <button
-                                            className="text-xs text-blue-400 hover:underline"
-                                            onClick={() => setLocalDebugMode('none')}
-                                        >
-                                            Show original
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-
-                            {inCart && !imgError && (
-                                <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 shadow">
-                                    <Check size={11} /> In Cart
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-
-                {/* ── Right panel: debug controls + tags + meta ─────────────── */}
-                <div className="w-60 flex-shrink-0 bg-gray-900 border-l border-gray-700 flex flex-col overflow-y-auto text-white">
-
-                    {/* Debug mode selector */}
-                    <div className="p-3 border-b border-gray-700">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
-                            Debug Mode
-                        </div>
-                        <div className="space-y-0.5">
-                            {DEBUG_MODES.map(mode => (
-                                <label
-                                    key={mode.key}
-                                    className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded cursor-pointer transition-colors select-none ${
-                                        localDebugMode === mode.key
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-gray-300 hover:bg-gray-800'
-                                    }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="debug_mode"
-                                        value={mode.key}
-                                        checked={localDebugMode === mode.key}
-                                        onChange={() => setLocalDebugMode(mode.key)}
-                                        className="sr-only"
-                                    />
-                                    <span className={`text-[10px] w-4 font-mono ${localDebugMode === mode.key ? 'text-blue-200' : 'text-gray-600'}`}>
-                                        {mode.shortcut}
-                                    </span>
-                                    <span className="text-sm">{mode.label}</span>
-                                </label>
-                            ))}
-                        </div>
-
-                        {/* Mode-specific controls */}
-                        {currentMode.hasEdgeSliders && (
-                            <div className="mt-3 space-y-2.5 px-1">
-                                <div>
-                                    <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                                        <span>Low threshold</span>
-                                        <span className="font-mono">{edgeLow}</span>
-                                    </div>
-                                    <input
-                                        type="range" min={10} max={200} value={edgeLow}
-                                        onChange={e => setEdgeLow(Number(e.target.value))}
-                                        className="w-full accent-blue-400 h-1.5"
-                                    />
-                                </div>
-                                <div>
-                                    <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                                        <span>High threshold</span>
-                                        <span className="font-mono">{edgeHigh}</span>
-                                    </div>
-                                    <input
-                                        type="range" min={50} max={300} value={edgeHigh}
-                                        onChange={e => setEdgeHigh(Number(e.target.value))}
-                                        className="w-full accent-blue-400 h-1.5"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {currentMode.hasOverlaySlider && (
-                            <div className="mt-2.5 px-1">
-                                <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                                    <span>Overlay opacity</span>
-                                    <span className="font-mono">{Math.round(overlayOpacity * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min={0} max={100}
-                                    value={Math.round(overlayOpacity * 100)}
-                                    onChange={e => setOverlayOpacity(Number(e.target.value) / 100)}
-                                    className="w-full accent-blue-400 h-1.5"
-                                />
-                            </div>
-                        )}
-
-                        {currentMode.hasSegSlider && (
-                            <div className="mt-3 px-1">
-                                <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                                    <span>Confidence</span>
-                                    <span className="font-mono">{Math.round(segConf * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min={10} max={90}
-                                    value={Math.round(segConf * 100)}
-                                    onChange={e => setSegConf(Number(e.target.value) / 100)}
-                                    className="w-full accent-blue-400 h-1.5"
-                                />
-                            </div>
-                        )}
-
-                        {!currentMode.hasEdgeSliders && !currentMode.hasSegSlider && localDebugMode !== 'none' && (
-                            <p className="mt-2 text-[10px] text-gray-600 px-1">Model defaults — no controls.</p>
-                        )}
-                    </div>
-
-                    {affordanceLoading && (
-                        <div className="p-3 border-b border-gray-700 text-xs text-gray-400 flex items-center gap-2">
-                            <Loader2 className="animate-spin" size={12} />
-                            Loading affordance ratings…
-                        </div>
-                    )}
-                    {!affordanceLoading && affordanceError && (
-                        <div className="p-3 border-b border-gray-700 text-xs text-red-400">
-                            {affordanceError}
-                        </div>
-                    )}
-                    {!affordanceLoading && !affordanceError && (
-                        <AffordancePanel scores={affordanceScores} method={affordanceMethod} />
-                    )}
-
-                    {canonicalAvailable && <RoomTypePanel roomTags={roomTags} />}
-
-                    {/* Tags */}
-                    {tags.length > 0 && (
-                        <div className="p-3 border-b border-gray-700">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Tags</div>
-                                    {canonicalAvailable && (
-                                        <span className="text-[8px] font-bold uppercase px-1 py-0.5 rounded bg-emerald-900 text-emerald-400 border border-emerald-700">
-                                            canonical
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2 text-[9px] text-gray-600">
-                                    <span className="flex items-center gap-1">
-                                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-500" /> imported
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500" /> pipeline
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                                {tags.map(t => (
-                                    <TagBadge key={`${t.label}-${t.source}`} tag={t} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Image meta */}
-                    {img && (
-                        <div className="p-3 text-[10px] text-gray-500 space-y-1 flex-1">
-                            <div>ID: <span className="font-mono text-gray-300">{img.id}</span></div>
-                            {detail?.meta_data?.upload_batch_id && (
-                                <div>Batch: <span className="font-mono text-gray-300 text-[9px]">{detail.meta_data.upload_batch_id}</span></div>
-                            )}
-                            {scienceRun?.completed_at && (
-                                <div>
-                                    Analyzed:{' '}
-                                    <span className="font-mono text-gray-300 text-[9px]">
-                                        {new Date(scienceRun.completed_at).toLocaleDateString()}
-                                    </span>
-                                </div>
-                            )}
-                            {scienceRun?.science_version && (
-                                <div>
-                                    Version:{' '}
-                                    <span className="font-mono text-gray-400 text-[9px]">{scienceRun.science_version}</span>
-                                </div>
-                            )}
-                            <div className="pt-2 text-[9px] text-gray-700 leading-relaxed">
-                                ← → navigate &nbsp;·&nbsp; 1–8 debug<br />
-                                C cart &nbsp;·&nbsp; Esc close
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* ── Bottom panels: science attributes + human validations ────── */}
-            <div className={`flex-shrink-0 flex bg-white border-t border-gray-200 overflow-hidden ${bothBottomPanelsCollapsed ? 'h-11' : 'h-56'}`}>
-
-                {/* Science attributes */}
-                <div className={`flex-1 flex flex-col min-w-0 border-r border-gray-200 ${scienceOpen ? 'h-full' : 'self-start'}`}>
-                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                        <button
-                            type="button"
-                            onClick={() => setScienceOpen(v => !v)}
-                            aria-expanded={scienceOpen}
-                            className="flex items-center gap-2 text-left"
-                        >
-                            <h3 className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                                Science Attributes
-                            </h3>
-                            {scienceOpen ? <ChevronUp size={12} className="text-gray-400" /> : <ChevronDown size={12} className="text-gray-400" />}
-                        </button>
-                        <div className="flex items-center gap-2">
-                            {detailLoading && <Loader2 className="animate-spin text-gray-400" size={12} />}
-                            {!detailLoading && scienceRunBadge()}
-                            {!detailLoading && detail && hasScienceData && (
-                                <span className="text-[10px] text-gray-400">
-                                    {detail.science_attributes.length} values · {groupedAttrs.length} groups
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    {scienceOpen && (
-                        <div className="flex-1 overflow-y-auto p-2">
-                            {detailLoading && (
-                                <div className="flex items-center justify-center h-full text-gray-400">
-                                    <Loader2 className="animate-spin mr-2" size={14} />
-                                    <span className="text-xs">Loading…</span>
-                                </div>
-                            )}
-
-                            {detailError && !detailLoading && (
-                                <div className="flex items-center gap-2 text-red-500 text-xs p-2">
-                                    <AlertCircle size={14} /> {detailError}
-                                </div>
-                            )}
-
-                            {!detailLoading && !detailError && !hasScienceData && (
-                                <p className="text-xs text-gray-400 italic p-2">
-                                    {scienceEmptyMessage()}
-                                </p>
-                            )}
-
-                            {!detailLoading && !detailError && groupedAttrs.map(([prefix, attrs]) => (
-                                <AttributeGroup
-                                    key={prefix}
-                                    prefix={prefix}
-                                    attrs={attrs}
-                                    defaultOpen={groupedAttrs.length <= 4}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Human validations */}
-                <div className={`w-72 flex-shrink-0 flex flex-col ${humanOpen ? 'h-full' : 'self-start'}`}>
-                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                        <button
-                            type="button"
-                            onClick={() => setHumanOpen(v => !v)}
-                            aria-expanded={humanOpen}
-                            className="flex items-center gap-2 text-left"
-                        >
-                            <h3 className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                                Human Validations
-                            </h3>
-                            {humanOpen ? <ChevronUp size={12} className="text-gray-400" /> : <ChevronDown size={12} className="text-gray-400" />}
-                        </button>
-                        {!detailLoading && detail && (
-                            <span className="text-[10px] text-gray-400">
-                                {detail.human_validations.length} records
-                            </span>
-                        )}
-                    </div>
-
-                    {humanOpen && (
-                        <div className="flex-1 overflow-y-auto">
-                            {detailLoading && (
-                                <div className="flex items-center justify-center h-full text-gray-400">
-                                    <Loader2 className="animate-spin mr-2" size={14} />
-                                    <span className="text-xs">Loading…</span>
-                                </div>
-                            )}
-
-                            {!detailLoading && !hasHumanData && !detailError && (
-                                <p className="text-xs text-gray-400 italic p-3">
-                                    No human validations yet.
-                                </p>
-                            )}
-
-                            {!detailLoading && detail?.human_validations?.map((v, i) => (
-                                <div key={i} className="px-3 py-2 border-b border-gray-100 hover:bg-gray-50">
-                                    <div className="flex items-center justify-between mb-0.5">
-                                        <span className="text-xs font-semibold text-gray-700 truncate">
-                                            {v.username ?? (v.user_id != null ? `user_${v.user_id}` : 'Pipeline')}
-                                        </span>
-                                        <span className="text-xs font-mono font-bold text-blue-700 flex-shrink-0">
-                                            {v.value.toFixed(2)}
-                                        </span>
-                                    </div>
-                                    <div className="text-[10px] text-gray-500 font-mono truncate mb-0.5">
-                                        {v.attribute_key}
-                                    </div>
-                                    <div className="flex gap-3 text-[10px] text-gray-400">
-                                        {v.duration_ms != null && v.duration_ms > 0 && (
-                                            <span>{v.duration_ms.toLocaleString()}ms</span>
-                                        )}
-                                        {v.created_at && (
-                                            <span>{new Date(v.created_at).toLocaleDateString()}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
+/**
+ * Overview tab: image metadata and tags
+ */
+function OverviewTab({ image }) {
+  return (
+    <div className="space-y-4">
+      {/* Dimensions */}
+      {image.width && image.height && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase">Dimensions</p>
+            <p className="text-sm text-gray-900">{image.width} × {image.height}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase">Validations</p>
+            <p className="text-sm text-gray-900">{image.validation_count || 0}</p>
+          </div>
         </div>
+      )}
+
+      {/* Room type */}
+      {image.room_type && (
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Room Type</p>
+          <span className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
+            {image.room_type}
+          </span>
+        </div>
+      )}
+
+      {/* Canonical tags */}
+      {image.canonical_tags && image.canonical_tags.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Tags</p>
+          <div className="flex flex-wrap gap-2">
+            {image.canonical_tags.map(tag => (
+              <span
+                key={tag}
+                className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-300 rounded text-sm text-gray-700"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Science run status */}
+      {image.science && (
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Science Status</p>
+          <div className="flex items-center gap-2">
+            <span className={[
+              'px-2.5 py-1 rounded text-sm font-medium',
+              image.science.run_status === 'completed'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : image.science.run_status === 'running'
+                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                : image.science.run_status === 'failed'
+                ? 'bg-red-50 text-red-700 border border-red-200'
+                : 'bg-gray-50 text-gray-700 border border-gray-200',
+            ].join(' ')}>
+              {image.science.run_status}
+            </span>
+            {image.science.run_id && (
+              <span className="text-xs text-gray-500 font-mono">run #{image.science.run_id}</span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Science Features tab: displays trust-wrapped feature values
+ */
+function ScienceFeaturesTab({ science }) {
+  if (!science.features || Object.keys(science.features).length === 0) {
+    return (
+      <div className="py-6 text-center text-gray-500">
+        <p>No science features available for this image.</p>
+      </div>
     );
+  }
+
+  const featureEntries = Object.entries(science.features);
+
+  return (
+    <div className="space-y-3">
+      {featureEntries.map(([key, envelope]) => (
+        <div key={key} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <p className="text-xs font-mono text-gray-500 uppercase tracking-wide">{key}</p>
+              <p className="text-sm font-semibold text-gray-900">{envelope.value.toFixed(3)}</p>
+            </div>
+            <TrustBadge evaluation_status={envelope.evaluation_status} />
+          </div>
+
+          {/* Confidence interval */}
+          {envelope.confidence_interval_95 && (
+            <div className="text-xs text-gray-600 mb-1">
+              95% CI: [{envelope.confidence_interval_95[0].toFixed(3)}, {envelope.confidence_interval_95[1].toFixed(3)}]
+            </div>
+          )}
+
+          {/* Model info */}
+          <div className="text-xs text-gray-500 space-y-0.5">
+            {envelope.model_id && (
+              <div><span className="font-semibold">Model:</span> {envelope.model_id}</div>
+            )}
+            {envelope.n_training > 0 && (
+              <div><span className="font-semibold">Training samples:</span> {envelope.n_training}</div>
+            )}
+            {envelope.notes && (
+              <div className="italic mt-1">{envelope.notes}</div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Affordances tab: displays predictions with confidence envelopes
+ */
+function AffordancesTab({ affordances }) {
+  return (
+    <div className="space-y-3">
+      {affordances.map(aff => (
+        <div key={aff.key} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <p className="text-xs font-mono text-gray-500 uppercase tracking-wide">{aff.key}</p>
+              <p className="text-sm text-gray-700">{aff.label}</p>
+              <p className="text-sm font-semibold text-gray-900 mt-1">{aff.score.toFixed(2)}</p>
+            </div>
+            {aff.confidence && (
+              <TrustBadge evaluation_status={aff.confidence.evaluation_status} />
+            )}
+          </div>
+
+          {/* Confidence data */}
+          {aff.confidence && (
+            <div className="text-xs text-gray-500 space-y-0.5">
+              {aff.confidence.confidence_interval_95 && (
+                <div>
+                  95% CI: [{aff.confidence.confidence_interval_95[0].toFixed(2)}, {aff.confidence.confidence_interval_95[1].toFixed(2)}]
+                </div>
+              )}
+              {aff.confidence.model_id && (
+                <div><span className="font-semibold">Model:</span> {aff.confidence.model_id}</div>
+              )}
+              {aff.confidence.n_training > 0 && (
+                <div><span className="font-semibold">Training samples:</span> {aff.confidence.n_training}</div>
+              )}
+              {aff.confidence.notes && (
+                <div className="italic mt-1">{aff.confidence.notes}</div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }

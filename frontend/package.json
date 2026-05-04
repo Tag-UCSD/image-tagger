@@ -12,6 +12,7 @@
     "dev:monitor": "vite apps/monitor --port 3002",
     "dev:admin": "vite apps/admin --port 3003",
     "dev:explorer": "vite apps/explorer --port 3004",
+    "dev:preview": "vite shared --port 5173 --host 127.0.0.1",
     "dev:all": "concurrently \"npm run dev:workbench\" \"npm run dev:monitor\" \"npm run dev:admin\" \"npm run dev:explorer\"",
     "build": "npm run build -w apps/workbench && npm run build -w apps/monitor && npm run build -w apps/admin && npm run build -w apps/explorer"
   },
