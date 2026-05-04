@@ -1,0 +1,131 @@
+export const searchResponse = {
+  items: [
+    {
+      id: 101,
+      url: "https://picsum.photos/seed/101/800/600",
+      thumbnail_url: "https://picsum.photos/seed/101/400/300",
+      room_type: "living_room",
+      canonical_tags: ["biophilic", "window", "daylight"],
+      validation_count: 4,
+    },
+    {
+      id: 102,
+      url: "https://picsum.photos/seed/102/800/600",
+      thumbnail_url: "https://picsum.photos/seed/102/400/300",
+      room_type: "bedroom",
+      canonical_tags: ["minimal", "natural_light"],
+      validation_count: 2,
+    },
+    {
+      id: 103,
+      url: "https://picsum.photos/seed/103/800/600",
+      thumbnail_url: "https://picsum.photos/seed/103/400/300",
+      room_type: "kitchen",
+      canonical_tags: ["modern", "open_plan"],
+      validation_count: 7,
+    },
+  ],
+  total: 37,
+  page: 1,
+  page_size: 20,
+};
+
+export const searchEmptyResponse = {
+  items: [],
+  total: 0,
+  page: 1,
+  page_size: 20,
+};
+
+export const imageDetail = {
+  id: 101,
+  url: "https://picsum.photos/seed/101/800/600",
+  thumbnail_url: "https://picsum.photos/seed/101/400/300",
+  room_type: "living_room",
+  canonical_tags: ["biophilic", "window", "daylight"],
+  validation_count: 4,
+  width: 1600,
+  height: 1200,
+  science: {
+    run_id: 8801,
+    run_status: "completed",
+    features: {
+      "light.daylight_ratio": {
+        value: 0.84,
+        model_id: "feature_daylight_ratio_v1",
+        evaluation_status: "proxy_validated",
+        confidence_interval_95: [0.79, 0.88],
+        n_training: 0,
+        notes: "Derived feature; proxy validated against internal reference set.",
+      },
+      "texture.visual_complexity": {
+        value: 0.41,
+        model_id: "feature_visual_complexity_v1",
+        evaluation_status: "untested",
+        confidence_interval_95: null,
+        n_training: 0,
+        notes: "Evaluation provenance not yet documented in ML_EVALUATION.md; display as untested in v1.",
+      },
+    },
+    affordances: [
+      {
+        key: "L059",
+        label: "sleep_suitability",
+        score: 5.8,
+        confidence: {
+          value: 5.8,
+          model_id: "affordance_L059_lgbm_v1",
+          evaluation_status: "validated",
+          confidence_interval_95: [5.2, 6.1],
+          n_training: 1523,
+          notes: "held-out test R²=0.71; see ML_EVALUATION.md#L059",
+        },
+      },
+    ],
+  },
+  regions: [
+    {
+      id: 901,
+      image_id: 101,
+      geometry: { type: "bbox", x: 245, y: 180, width: 320, height: 210 },
+      auto_label: null,
+      auto_confidence: null,
+      manual_label: "window",
+    },
+  ],
+};
+
+export const attributesResponse = {
+  attributes: [
+    {
+      id: 12,
+      key: "light.daylight_ratio",
+      name: "Daylight Ratio",
+      category: "light",
+      level: "continuous",
+      range: "0..1",
+      sources: "science_pipeline_v3.4",
+      notes: "Used by explorer filters and workbench validation.",
+    },
+    {
+      id: 13,
+      key: "texture.visual_complexity",
+      name: "Visual Complexity",
+      category: "texture",
+      level: "continuous",
+      range: "0..1",
+      sources: "science_pipeline_v3.4",
+      notes: null,
+    },
+    {
+      id: 14,
+      key: "room.biophilic_index",
+      name: "Biophilic Index",
+      category: "room",
+      level: "continuous",
+      range: "0..1",
+      sources: "science_pipeline_v3.4",
+      notes: "Composite of daylight, greenery, and natural material features.",
+    },
+  ],
+};
