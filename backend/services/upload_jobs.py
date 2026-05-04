@@ -63,10 +63,24 @@ def create_upload_job_for_images(
         )
         db.add(item)
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.exception("create_upload_job_for_images: commit failed: %s", exc)
+        raise
     db.refresh(job)
     logger.info("Created UploadJob %s with %d items", job.id, len(records))
     return job
+
+
+def _safe_commit(session: Session) -> None:
+    """Commit and roll back on failure (Task A-4)."""
+    try:
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
 
 
 def _run_upload_job_inner(session: Session, job_id: int) -> None:
@@ -77,12 +91,12 @@ def _run_upload_job_inner(session: Session, job_id: int) -> None:
 
     if not job.items:
         job.status = "COMPLETED"
-        session.commit()
+        _safe_commit(session)
         logger.info("UploadJob %s has no items; marking as COMPLETED.", job_id)
         return
 
     job.status = "RUNNING"
-    session.commit()
+    _safe_commit(session)
 
     # Science pipeline is instantiated once per job to reuse analyzers.
     config = SciencePipelineConfig(enable_all=True)
@@ -97,7 +111,7 @@ def _run_upload_job_inner(session: Session, job_id: int) -> None:
             continue
 
         item.status = "RUNNING"
-        session.commit()
+        _safe_commit(session)
 
         try:
             ok = False
@@ -125,7 +139,7 @@ def _run_upload_job_inner(session: Session, job_id: int) -> None:
 
         job.completed_items = completed
         job.failed_items = failed
-        session.commit()
+        _safe_commit(session)
 
     if failed and not completed:
         job.status = "FAILED"
@@ -134,7 +148,7 @@ def _run_upload_job_inner(session: Session, job_id: int) -> None:
     else:
         job.status = "COMPLETED"
 
-    session.commit()
+    _safe_commit(session)
     logger.info(
         "UploadJob %s finished. completed=%d failed=%d",
         job.id,

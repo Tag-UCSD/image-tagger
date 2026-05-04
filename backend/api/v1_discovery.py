@@ -8,7 +8,10 @@ database + training export service. It exposes three main endpoints:
 - POST /v1/explorer/export
 - GET  /v1/explorer/attributes
 
-All endpoints are RBAC-protected for taggers (and above).
+Per `/docs/CONTRACT.md` and Task A-3, every Explorer route is anonymous
+public-read. Authentication dependencies must NOT be added to anything
+under this router; the workbench, monitor, and admin routers carry the
+JWT-protected paths instead.
 """
 
 from __future__ import annotations
@@ -21,13 +24,12 @@ from typing import List, Optional
 from pathlib import Path
 
 import cv2
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 import numpy as np
 import requests
 from sqlalchemy.orm import Session
 
 from backend.database.core import get_db, SessionLocal
-from backend.services.auth import require_tagger
 from backend.services.training_export import TrainingExporter
 from backend.schemas.training import TrainingExample
 from backend.schemas.discovery import (
@@ -132,7 +134,14 @@ def _compute_and_cache_affordance_payload(image: Image, db: Session) -> dict:
     meta[_AFFORDANCE_CACHE_KEY] = payload
     image.meta_data = meta
     db.add(image)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.exception(
+            "affordance_cache: commit failed for image %s: %s", image.id, exc
+        )
+        raise
     db.refresh(image)
     return payload
 
@@ -144,41 +153,81 @@ def _get_or_compute_affordance_payload(image: Image, db: Session) -> dict:
     return _compute_and_cache_affordance_payload(image, db)
 
 
+# --------------------------------------------------------------------------
+# Explorer search — both GET (contract-canonical, query-string driven) and
+# POST (legacy body-driven) handlers share the implementation below. Input
+# validation is performed via FastAPI's ``Query`` constraints / the Pydantic
+# ``SearchQuery`` schema; runtime clamping has been removed (Task A-4).
+# --------------------------------------------------------------------------
+
+
+@router.get("/search", response_model=List[ImageSearchResult])
+def search_images_get(
+    db: Session = Depends(get_db),
+    q: Optional[str] = Query(default=None, max_length=500, alias="q"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    room_type: Optional[str] = Query(default=None, max_length=100),
+    tag: Optional[str] = Query(default=None, max_length=200),
+) -> List[ImageSearchResult]:
+    """Anonymous public-read search (per /docs/CONTRACT.md).
+
+    Negative or zero ``page`` / out-of-range ``page_size`` produce a 422
+    ``VALIDATION_ERROR`` via the global handler in
+    ``backend.error_handlers``. ``room_type`` and ``tag`` are accepted
+    today but currently unused by the underlying lookup; they are
+    declared so the contract-shaped query string is rejected when any
+    free-text filter exceeds its declared length cap.
+    """
+    return _run_search(db=db, text=q, page=page, page_size=page_size)
+
+
 @router.post("/search", response_model=List[ImageSearchResult])
 def search_images(
     payload: SearchQuery,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> List[ImageSearchResult]:
-    """Search for images matching the query.
+    """Body-form variant of explorer search.
 
-    This minimal implementation supports:
-      - free-text search over image name / description (if available), or
-      - returning a simple paginated list when no filter is provided.
+    Kept alongside the GET endpoint so existing frontend callers that
+    POST a body continue to work. Schema-level constraints on
+    ``SearchQuery`` (see ``backend/schemas/discovery.py``) drive
+    validation; the route no longer performs runtime clamping.
+    """
+    return _run_search(
+        db=db,
+        text=getattr(payload, "text", None) or getattr(payload, "query_string", None),
+        page=payload.page,
+        page_size=payload.page_size,
+    )
 
-    The exact ranking can be improved later; for now we favour determinism
-    and well-formed responses over sophistication.
+
+def _run_search(
+    *,
+    db: Session,
+    text: Optional[str],
+    page: int,
+    page_size: int,
+) -> List[ImageSearchResult]:
+    """Shared search implementation used by both GET and POST handlers.
+
+    All input clamping has moved to the schema/Query constraints so this
+    function can assume ``page`` and ``page_size`` are already valid.
     """
     # Lazy import to avoid circular dependencies
     from backend.models.assets import Image  # type: ignore
 
     q = db.query(Image)
 
-    if getattr(payload, "text", None):
-        text = f"%{payload.text}%"
-        # Try to filter by name / description if those fields exist.
-        # We guard each attribute access with hasattr to avoid hard failures
-        # across slightly different schemas.
+    if text:
+        like = f"%{text}%"
         name_col = getattr(Image, "name", None)
         desc_col = getattr(Image, "description", None)
         if name_col is not None and desc_col is not None:
-            q = q.filter((name_col.ilike(text)) | (desc_col.ilike(text)))
+            q = q.filter((name_col.ilike(like)) | (desc_col.ilike(like)))
         elif name_col is not None:
-            q = q.filter(name_col.ilike(text))
+            q = q.filter(name_col.ilike(like))
 
-    # Use page/page_size from schema (frontend sends these)
-    page = max(1, getattr(payload, "page", 1))
-    page_size = max(1, min(getattr(payload, "page_size", 48), 200))
     offset = (page - 1) * page_size
     q = q.order_by(getattr(Image, "id")).offset(offset).limit(page_size)
 
@@ -268,7 +317,6 @@ def search_images(
 def export_training_data(
     payload: ExportRequest,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> List[TrainingExample]:
     """Export training examples for the given image IDs.
 
@@ -290,7 +338,6 @@ def export_training_data(
 @router.get("/attributes", response_model=List[AttributeRead])
 def list_attributes(
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> List[AttributeRead]:
     """Return the attribute registry for Explorer filters.
 
@@ -305,7 +352,6 @@ def list_attributes(
 def get_image_detail(
     image_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> ImageDetailResult:
     """Return the full detail payload for the single-image viewer modal.
 
@@ -559,7 +605,6 @@ def get_image_detail(
 def bootstrap_science(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> BootstrapResponse:
     """Queue missing canonical science runs for all images.
 
@@ -585,7 +630,6 @@ def bootstrap_science(
 @router.get("/science/status", response_model=ScienceStatusResponse)
 def science_status(
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ) -> ScienceStatusResponse:
     """Return aggregate progress for the active canonical science version."""
     from backend.services.science_runs import get_science_status
@@ -642,7 +686,6 @@ def _run_pending_science_jobs() -> None:
 def get_image_affordance(
     image_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ):
     image = db.query(Image).filter(Image.id == image_id).first()
     if image is None:
@@ -659,7 +702,6 @@ def get_image_affordance(
 def seed_sample_images(
     payload: Optional[dict] = None,
     db: Session = Depends(get_db),
-    user=Depends(require_tagger),
 ):
     """Seed the DB with bundled sample image URLs from google_images_import.json.
 

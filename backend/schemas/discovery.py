@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, conlist
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -36,11 +36,17 @@ class ScienceStatusResponse(BaseModel):
     total_images: int
 
 class SearchQuery(BaseModel):
-    """Contract for Complex Search"""
-    query_string: str = ""
-    filters: Dict[str, Any] = {}
-    page: int = 1
-    page_size: int = 20
+    """Contract for Complex Search.
+
+    All free-text fields and batch sizes are capped (Task A-4) so that
+    request validation rejects pathological inputs at the boundary
+    rather than absorbing them with runtime clamping.
+    """
+
+    query_string: str = Field(default="", max_length=500)
+    filters: Dict[str, Any] = Field(default_factory=dict)
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=20, ge=1, le=100)
 
 class ImageSearchResult(BaseModel):
     """Contract for Masonry Grid Items - matches frontend expectations"""
@@ -54,9 +60,14 @@ class ImageSearchResult(BaseModel):
     science_run_status: Optional[str] = None  # PENDING | RUNNING | COMPLETED | FAILED | None
     
 class ExportRequest(BaseModel):
-    """Contract for Dataset Export"""
-    image_ids: List[int]
-    format: str = "json"
+    """Contract for Dataset Export.
+
+    ``image_ids`` is required and capped to a single batch of 1000 to
+    prevent unbounded export payloads (Task A-4 ``conlist`` rule).
+    """
+
+    image_ids: conlist(int, min_length=1, max_length=1000)  # type: ignore[valid-type]
+    format: str = Field(default="json", max_length=32)
 
 class AttributeRead(BaseModel):
     """Attribute registry entry for Explorer filters."""

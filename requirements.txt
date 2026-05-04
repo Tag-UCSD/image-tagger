@@ -1,0 +1,81 @@
+# image-tagger backend runtime requirements
+#
+# Pinning policy: compatible-release (`~=X.Y`) on direct deps so patch and
+# minor upgrades flow in but new majors don't surprise us. For full
+# reproducibility (CI parity, prod parity), generate a hashed lockfile:
+#
+#     pip install pip-tools
+#     pip-compile --generate-hashes requirements.txt -o requirements.lock
+#
+# Then have CI / Docker `pip install -r requirements.lock` instead.
+#
+# This file is consumed by .github/workflows/ci.yml — when present, the
+# workflow's hand-rolled fallback `pip install` list is skipped. See also
+# `requirements-install.txt` (separate concern: host-side install guard
+# scripts only).
+
+# ─── PyTorch CPU-only wheel index ────────────────────────────────────────
+# The default `torch` wheel on PyPI bundles ~700MB of CUDA libraries we
+# don't need on CI runners or non-GPU dev boxes. The CPU-only index
+# delivers a ~150MB wheel instead. Remove this line if you provision GPU
+# hosts and want CUDA wheels.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# ─── Web framework ──────────────────────────────────────────────────────
+fastapi~=0.115
+uvicorn[standard]~=0.30
+# Imported directly in middleware/request_context.py and error_handlers.py
+# (not just transitively via fastapi), so pin it explicitly.
+starlette~=0.40
+
+# ─── Validation / settings ──────────────────────────────────────────────
+pydantic~=2.9
+pydantic-settings~=2.6
+
+# ─── Database ───────────────────────────────────────────────────────────
+SQLAlchemy~=2.0
+# `-binary` ships precompiled libpq, fine for dev/CI. For prod containers
+# consider switching to `psycopg2` (source build) or `psycopg[binary]` (v3).
+psycopg2-binary~=2.9
+
+# ─── Auth / crypto ──────────────────────────────────────────────────────
+# WARNING: python-jose is unmaintained (last release 2024) and has open
+# CVEs. Tracked migration target: PyJWT or authlib. Until then, pinning
+# below the next major to avoid drifting onto an abandoned line.
+python-jose[cryptography]~=3.3
+
+# ─── Logging ────────────────────────────────────────────────────────────
+structlog~=24.4
+
+# ─── HTTP clients ───────────────────────────────────────────────────────
+requests~=2.32
+httpx~=0.27
+
+# ─── Config / file formats ──────────────────────────────────────────────
+PyYAML~=6.0
+
+# ─── Numerics & computer vision ─────────────────────────────────────────
+# These are imported eagerly at module-load time by backend.science.* and
+# are therefore required even for the API entrypoint (`import backend.main`).
+# Phase 1 cleanup task: make these lazy so the API can boot without them.
+numpy~=1.26
+Pillow~=10.4
+# `-headless` omits Qt/GTK/X11 deps — required for CI/server use and
+# avoids a known conflict with PyQt-based desktop apps in dev.
+opencv-python-headless~=4.10
+scipy~=1.13
+scikit-image~=0.24
+
+# ─── Deep learning ──────────────────────────────────────────────────────
+# Resolved against the CPU index URL declared at the top of this file.
+torch~=2.5
+
+# ─── Data analysis ──────────────────────────────────────────────────────
+# Used by scripts/bn_*.py for cog/affect prior merging. If those scripts
+# move to a `dev-scripts/` group later, pandas can move with them.
+pandas~=2.2
+
+# ─── Test framework ─────────────────────────────────────────────────────
+# CI's `Run Guardian tests` step runs pytest against tests/test_guardian.py.
+# Move to a separate requirements-dev.txt when you split runtime/dev.
+pytest~=8.3

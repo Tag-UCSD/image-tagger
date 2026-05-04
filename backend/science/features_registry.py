@@ -13,7 +13,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+from backend.science.trust import (
+    DEFAULT_UNTESTED_NOTES,
+    LEGACY_MODEL_ID,
+    EvaluationStatus,
+    TrustEnvelope,
+    untested_envelope,
+)
 
 
 FEATURES_PATH = Path(__file__).with_name("features_canonical.jsonl")
@@ -34,8 +42,30 @@ class FeatureDefinition:
     scale: Optional[Dict[str, Any]] = None
     methods: Optional[List[Dict[str, Any]]] = None
 
+    # Trust-envelope metadata (Phase 1, Task A-7). Optional in the JSONL
+    # because the canonical feature file predates the trust contract;
+    # entries without these fields fall back to "untested" so the UI
+    # renders an honest warning badge rather than a missing one.
+    evaluation_status: EvaluationStatus = "untested"
+    model_id: Optional[str] = None
+    n_training: int = 0
+    confidence_interval_95: Optional[Tuple[float, float]] = None
+    trust_notes: Optional[str] = None
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "FeatureDefinition":
+        ci = data.get("confidence_interval_95")
+        if isinstance(ci, list) and len(ci) == 2:
+            ci_tuple: Optional[Tuple[float, float]] = (float(ci[0]), float(ci[1]))
+        elif isinstance(ci, tuple) and len(ci) == 2:
+            ci_tuple = (float(ci[0]), float(ci[1]))
+        else:
+            ci_tuple = None
+
+        status_raw = data.get("evaluation_status", "untested")
+        if status_raw not in ("validated", "proxy_validated", "untested"):
+            status_raw = "untested"
+
         return cls(
             key=data.get("key", ""),
             category=data.get("category", "unknown"),
@@ -49,6 +79,11 @@ class FeatureDefinition:
             source=data.get("source"),
             scale=data.get("scale"),
             methods=data.get("methods"),
+            evaluation_status=status_raw,  # type: ignore[arg-type]
+            model_id=data.get("model_id"),
+            n_training=int(data.get("n_training", 0) or 0),
+            confidence_interval_95=ci_tuple,
+            trust_notes=data.get("trust_notes"),
         )
 
 
@@ -95,3 +130,35 @@ def get_feature(key: str) -> Optional[FeatureDefinition]:
         if feat.key == key:
             return feat
     return None
+
+
+def get_trust_envelope(key: str, value: float) -> TrustEnvelope:
+    """Wrap a feature output in its registry-defined trust envelope.
+
+    Falls back to an "untested" envelope when the feature has no registry
+    entry or has not yet been promoted out of the default. This is the
+    single seam where pipeline outputs become trust-stamped, per Task A-7.
+    """
+    feat = get_feature(key)
+    if feat is None:
+        return untested_envelope(
+            float(value),
+            model_id=LEGACY_MODEL_ID,
+            notes=DEFAULT_UNTESTED_NOTES,
+        )
+
+    if feat.evaluation_status == "untested":
+        return untested_envelope(
+            float(value),
+            model_id=feat.model_id or LEGACY_MODEL_ID,
+            notes=feat.trust_notes or DEFAULT_UNTESTED_NOTES,
+        )
+
+    return TrustEnvelope(
+        value=float(value),
+        model_id=feat.model_id or f"feature_{key.replace('.', '_')}_v0",
+        evaluation_status=feat.evaluation_status,
+        confidence_interval_95=feat.confidence_interval_95,
+        n_training=feat.n_training,
+        notes=feat.trust_notes or "",
+    )

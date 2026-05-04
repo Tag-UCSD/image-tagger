@@ -39,10 +39,26 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+_EXCLUDED_DIR_NAMES = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+_EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
+
+
+def _is_excluded(p: Path) -> bool:
+    """Return True if ``p`` is an interpreter cache artifact that must never
+    be hashed into governance.lock. CI runs from a fresh checkout with
+    ``PYTHONDONTWRITEBYTECODE=1`` so these files don't exist there; if a
+    local freeze captures them, verify will fail in CI with "Protected
+    file missing"."""
+    if p.suffix in _EXCLUDED_SUFFIXES:
+        return True
+    return any(part in _EXCLUDED_DIR_NAMES for part in p.parts)
+
+
 def snapshot(conf: Dict[str, Any]) -> Dict[str, Any]:
     """
     Build a baseline snapshot:
-    - Hashes of all files under protected scopes
+    - Hashes of all files under protected scopes (excluding interpreter
+      caches like ``__pycache__`` / ``*.pyc``)
     - List of critical files
     - Root-level files (for prevent_new_root_files)
     """
@@ -57,6 +73,8 @@ def snapshot(conf: Dict[str, Any]) -> Dict[str, Any]:
         if not scope_path.exists():
             continue
         if scope_path.is_file():
+            if _is_excluded(scope_path):
+                continue
             rel = scope_path.relative_to(REPO_ROOT).as_posix()
             protected_files[rel] = {
                 "hash": sha256_file(scope_path),
@@ -65,12 +83,13 @@ def snapshot(conf: Dict[str, Any]) -> Dict[str, Any]:
             continue
 
         for p in scope_path.rglob("*"):
-            if p.is_file():
-                rel = p.relative_to(REPO_ROOT).as_posix()
-                protected_files[rel] = {
-                    "hash": sha256_file(p),
-                    "size": p.stat().st_size,
-                }
+            if not p.is_file() or _is_excluded(p):
+                continue
+            rel = p.relative_to(REPO_ROOT).as_posix()
+            protected_files[rel] = {
+                "hash": sha256_file(p),
+                "size": p.stat().st_size,
+            }
 
     root_files = sorted([p.name for p in REPO_ROOT.iterdir() if p.is_file()])
 

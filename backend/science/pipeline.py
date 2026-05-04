@@ -471,3 +471,55 @@ class SciencePipeline:
             logger.exception("Canonical pipeline failed for image %d", image_id)
             mark_run_failed(self.db, run.id, str(exc))
             return False
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Trust-envelope assembly (Phase 1, Task A-7)
+# ──────────────────────────────────────────────────────────────────────────
+#
+# This is the single seam where raw pipeline outputs become a wire-shaped
+# `SciencePayload` with every feature wrapped in a `TrustEnvelope`. The
+# registry decides each feature's `evaluation_status`; legacy features
+# without metadata fall back to `"untested"` per the Phase 1 contract.
+#
+# Imports are deferred inside the function so that importing
+# `backend.science.pipeline` does NOT pull in `pydantic` schema modules
+# at module-load time (the heavy pipeline already imports torch / scipy /
+# skimage; we don't want to add to that surface).
+def assemble_science_payload(
+    attributes,
+    run_id: int,
+    run_status: str = "completed",
+    affordances=None,
+):
+    """Wrap pipeline scalar outputs in trust envelopes for the API.
+
+    Parameters
+    ----------
+    attributes:
+        Mapping of canonical feature key → numeric scalar produced by the
+        pipeline analyzers (the same shape as ``AnalysisFrame.attributes``).
+    run_id:
+        ScienceRun primary key, surfaced to the client so it can correlate
+        a payload with the run-status table.
+    run_status:
+        One of the ``RunStatus`` literals defined in
+        ``backend.schemas.science``.
+    affordances:
+        Optional iterable of ``AffordancePrediction`` instances. Pass
+        ``None`` (the default) for runs that did not enable affordance
+        prediction; an empty list is serialised in that case.
+    """
+    from backend.schemas.science import SciencePayload
+    from backend.science.features_registry import get_trust_envelope
+
+    features = {
+        key: get_trust_envelope(key, float(value))
+        for key, value in (attributes or {}).items()
+    }
+    return SciencePayload(
+        run_id=run_id,
+        run_status=run_status,  # type: ignore[arg-type]
+        features=features,
+        affordances=list(affordances or []),
+    )

@@ -4,6 +4,68 @@ editor_options:
     wrap: 72
 ---
 
+# LIST OF TASKS
+
+  Backend Phase 1
+
+  - A-1 Environment and secrets: move passwords, API secrets, database URLs, and runtime settings out of code and into
+    environment variables. A script can hardcode a password while experimenting; a real app must fail loudly if a
+    required secret is missing.
+  - A-2 Structured logging: replace random print() debugging with JSON logs that include request IDs, timing, user info,
+    and status. This makes it possible to debug a deployed server after users start hitting it.
+  - A-3 Supabase JWT authentication: stop trusting headers like “I am admin” and instead verify signed login tokens.
+    This is the difference between a demo shortcut and actual authorization.
+  - A-4 Input validation and error handling: make every endpoint check incoming data and return predictable error
+    objects. Instead of crashing or returning inconsistent errors, the API should always say what failed in the same
+    shape.
+  - A-7 ML trust envelope: wrap every ML result with metadata saying whether it is validated, proxy-validated, or
+    untested. This keeps the UI honest: the app can show model outputs without pretending all of them are scientifically
+    proven.
+  - A-10 Health check: make /health actually check the database and storage, not just return “ok” because the server
+    process is alive. Deployment systems need this to know whether the app is truly usable.
+  - A-11 Smoke-critical integration tests: test the important real user paths through the backend: explorer, workbench,
+    admin, and monitor. This is not exhaustive testing; it is the minimum proof that the release path works.
+  - A-12a Backend deployment config: add the files needed to deploy the backend to Render from the repo. This turns “it
+    runs on my machine” into “there is a repeatable deployment recipe.”
+  - A-12b Backend live verification: a human checks the deployed backend against real Render, Supabase, storage,
+    database, and JWTs. An agent can write config, but it cannot prove your real cloud accounts are wired correctly
+    without access.
+
+  Frontend Phase 1
+
+  - B-1 Mock API client and fixtures: create one shared API client that can return fake data or call the real backend.
+    This lets the frontend be built before the backend is fully deployed, while still matching the contract.
+  - B-2 Shared design system: build common buttons, inputs, error banners, loading skeletons, modals, pagination, and
+    trust badges. Real apps avoid each page inventing its own UI rules.
+  - B-3 Explorer journey: implement public search, filters, pagination, image detail, science display, and trust badges.
+    This is the public browsing experience.
+  - B-4 Workbench journey: implement the tagger workflow: fetch one assigned labeling task, render the correct form,
+    validate input, submit, and move to the next item. The form must be generated from backend metadata rather than
+    hardcoded per attribute.
+  - B-5 Monitor journey: implement supervisor views for tagging velocity and inter-rater reliability. It must also
+    handle empty data and unauthorized users cleanly.
+  - B-6 Admin journey: implement image upload, budget display, and kill-switch controls. Upload validation must match
+    the backend exactly so users do not get different rules in browser vs server.
+  - B-7 Responsive and accessibility audit: make all four apps usable from small mobile screens to large desktop
+    screens, with labels, focus states, alt text, and no serious accessibility violations.
+  - B-8a Frontend deployment config: add Vercel config and workflow files so the whole frontend workspace deploys as one
+    site with routes for explorer, workbench, monitor, and admin.
+  - B-8b Frontend live verification: a human confirms the Vercel project, env vars, GitHub integration, deployed backend
+    URL, and demo JWTs actually work.
+  - B-9 Mock-to-live swap: final joint session where frontend switches from fake data to the deployed backend and both
+    engineers run the smoke test end to end.
+
+  Coordination Tasks
+
+  - C-1 Smoke test runbook: write the exact final checklist for proving the deployed product works. This prevents the
+    release test from being improvised.
+  - C-1.5 Platform checklist: separate repo-owned work from human-owned setup like Render, Vercel, Supabase, and
+    secrets. This avoids pretending code changes alone can create cloud accounts.
+  - C-2 JWT provisioning: create short-lived role tokens for admin, tagger, and supervisor without committing secrets.
+    These tokens let protected demo routes work before a full sign-in UI exists.
+  - Optional C-0 TRS contract diff: if the team uses the TRS integration track, compare it against the current contract
+    early and explicitly decide what changes are accepted, deferred, or rejected.
+
 # Engineering Brief
 
 Start here: read `docs/workplan/PRE_SPRINT.md` first, then execute from

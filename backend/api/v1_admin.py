@@ -3,7 +3,11 @@ import logging
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
 from pathlib import Path
-from fastapi import UploadFile, File,  APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import (
+    UploadFile, File, APIRouter, Depends, HTTPException,
+    BackgroundTasks, Query, Request,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select, update, func
@@ -13,6 +17,7 @@ from backend.services.auth import require_admin
 from backend.services.storage import get_image_storage_root, to_static_path
 from backend.services.costs import get_total_spent, log_vlm_usage
 from backend.services.vlm import describe_vlm_configuration, update_vlm_config, get_vlm_engine, StubEngine
+from backend.settings import settings
 
 logger = logging.getLogger(__name__)
 from backend.models.config import ToolConfig
@@ -59,7 +64,12 @@ async def update_model(
         tool.cost_per_1k_tokens = float(payload.cost_per_1k_tokens)
 
     db.add(tool)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.exception("update_model: commit failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to update model.") from exc
     db.refresh(tool)
     return ToolConfigRead.model_validate(tool)
 
@@ -68,21 +78,27 @@ async def update_model(
 def _get_budget_hard_limit() -> float:
     """Resolve the hard USD budget limit for VLM usage.
 
-    Priority:
-    1. VLM_HARD_LIMIT_USD env var
-    2. COST_HARD_LIMIT_USD env var
-    3. Conservative default of 15.0 USD
-    """ 
-    for key in ("VLM_HARD_LIMIT_USD", "COST_HARD_LIMIT_USD"):
-        raw = os.getenv(key)
-        if raw is None:
-            continue
+    The canonical source is the typed ``settings.vlm_hard_limit_usd``
+    (Task A-1). It is required in production and the lifespan startup
+    refuses to boot when it is missing, so reaching the dev fallback
+    here means we are running outside production with no value set.
+
+    ``COST_HARD_LIMIT_USD`` is preserved as a one-off legacy override so
+    pre-A-1 deployments keep working until they are migrated.
+    """
+    primary = settings.vlm_hard_limit_usd
+    if primary is not None and primary > 0:
+        return float(primary)
+
+    legacy = os.getenv("COST_HARD_LIMIT_USD")
+    if legacy is not None:
         try:
-            value = float(raw)
+            value = float(legacy)
             if value > 0:
                 return value
         except (TypeError, ValueError):
-            continue
+            pass
+
     return 15.0
 
 @router.get("/budget", response_model=BudgetStatus)
@@ -118,7 +134,7 @@ async def get_budget(
 
 @router.get("/costs/daily")
 async def get_daily_costs(
-    days: int = 30,
+    days: int = Query(default=30, ge=1, le=90),
     db: Session = Depends(get_db),
     user = Depends(require_admin),
 ) -> List[Dict[str, Any]]:
@@ -126,15 +142,14 @@ async def get_daily_costs(
 
     The response is a list of objects of the form:
     { "day": "YYYY-MM-DD", "total_cost": float }
+
+    Bounds on ``days`` are enforced via FastAPI's ``Query`` constraints
+    (Task A-4) — out-of-range values are rejected with the contract
+    ``VALIDATION_ERROR`` envelope rather than silently clamped.
     """
     from datetime import datetime, timedelta
 
     from backend.models.usage import ToolUsage
-
-    if days <= 0:
-        days = 1
-    if days > 90:
-        days = 90
 
     now = datetime.utcnow()
     start_ts = now - timedelta(days=days - 1)
@@ -188,8 +203,15 @@ async def kill_switch(
             .where(ToolConfig.cost_per_1k_tokens > 0)
             .values(is_enabled=False)
         )
-        db.execute(stmt)
-        db.commit()
+        try:
+            db.execute(stmt)
+            db.commit()
+        except Exception as exc:
+            db.rollback()
+            logger.exception("kill_switch: commit failed: %s", exc)
+            raise HTTPException(
+                status_code=500, detail="Failed to update kill-switch."
+            ) from exc
 
     # Re-use the logic from get_budget to compute state
     paid_enabled = db.execute(
@@ -287,11 +309,65 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MiB per file
 MAX_UPLOAD_FILES = 200  # Safety guard to avoid browser/HTTP timeouts on huge batches.
 
 
+async def _validate_upload_payload(request: Request) -> List[UploadFile]:
+    """Pre-auth multipart validation for ``POST /v1/admin/upload`` (Task A-4).
+
+    The acceptance criterion for A-4 expects an invalid multipart payload to
+    surface as ``VALIDATION_ERROR`` regardless of auth state. FastAPI
+    normally runs ``Depends(require_admin)`` before the path-operation's
+    own ``File(...)`` body parsing, which would yield a 401 first. Declaring
+    this dependency *ahead of* ``require_admin`` in the function signature
+    guarantees multipart validation runs first; the global validation
+    handler in ``backend.error_handlers`` reshapes the resulting error
+    into the contract envelope.
+    """
+    content_type = (request.headers.get("content-type") or "").lower()
+    if not content_type.startswith("multipart/form-data"):
+        raise RequestValidationError(
+            [
+                {
+                    "loc": ("body",),
+                    "msg": "Multipart form-data body required",
+                    "type": "missing",
+                    "input": None,
+                }
+            ]
+        )
+
+    try:
+        form = await request.form()
+    except Exception as exc:
+        raise RequestValidationError(
+            [
+                {
+                    "loc": ("body",),
+                    "msg": "Failed to parse multipart body",
+                    "type": "form_parsing_error",
+                    "input": None,
+                }
+            ]
+        ) from exc
+
+    files = [v for v in form.getlist("files") if isinstance(v, UploadFile)]
+    if not files:
+        raise RequestValidationError(
+            [
+                {
+                    "loc": ("body", "files"),
+                    "msg": "Field required",
+                    "type": "missing",
+                    "input": None,
+                }
+            ]
+        )
+    return files
+
+
 @router.post("/upload", response_model=AdminUploadResult, status_code=202)
 async def upload_images(
-    files: List[UploadFile] = File(...),
-    db: Session = Depends(get_db),
+    files: List[UploadFile] = Depends(_validate_upload_payload),
     user = Depends(require_admin),
+    db: Session = Depends(get_db),
     background_tasks: BackgroundTasks = None,
 ) -> AdminUploadResult:
     """Upload one or more images and enqueue a background science job.
@@ -387,7 +463,18 @@ async def upload_images(
             detail="No valid image files were uploaded.",
         )
 
-    db.commit()
+    # Commit the image rows. On any failure we explicitly roll back so the
+    # session is left in a clean state and no half-written rows leak into
+    # later operations on the same session (Task A-4).
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.exception("upload_images: commit failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to persist uploaded images.",
+        ) from exc
 
     job_id: Optional[int] = None
 
@@ -428,17 +515,17 @@ async def upload_images(
 
 @router.get("/upload/jobs")
 async def list_upload_jobs(
-    limit: int = 20,
+    limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
     user = Depends(require_admin),
 ) -> List[Dict[str, Any]]:
-    """List recent UploadJobs for monitoring asynchronous uploads."""
-    from backend.models.jobs import UploadJob
+    """List recent UploadJobs for monitoring asynchronous uploads.
 
-    if limit <= 0:
-        limit = 1
-    if limit > 100:
-        limit = 100
+    Pagination bounds are enforced via FastAPI's ``Query`` constraints
+    (Task A-4), so a 0/-1/9999 ``limit`` is rejected with a structured
+    ``VALIDATION_ERROR`` response instead of being silently clamped.
+    """
+    from backend.models.jobs import UploadJob
 
     stmt = (
         select(UploadJob)

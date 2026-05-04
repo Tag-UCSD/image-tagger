@@ -22,8 +22,8 @@
       "size": 5529665
     },
     "backend/science/features_registry.py": {
-      "hash": "e5582362affe751c16d3564ad226a38bbdc493aceb903aba45c5c80b1cf7b7ea",
-      "size": 2870
+      "hash": "4ad339a2f7ccf1c08614da6d9cf5563c518f604f37cbb3f6a447b2afc9106a25",
+      "size": 5406
     },
     "backend/science/vision.py": {
       "hash": "6c855f208c009e29861b282144314ffe57da754dc4c1aa8d0bf849a1f43d2d48",
@@ -58,8 +58,8 @@
       "size": 2834
     },
     "backend/science/pipeline.py": {
-      "hash": "398fa24d8ecdc6f67f3bea8853a3ed53e90a11bff2609b7c8d10baa53412b827",
-      "size": 20589
+      "hash": "7adcdcd19cb7473d5fbad7214951d65001eb46f773699ae524609a33ddead753",
+      "size": 22930
     },
     "backend/science/bn_naming_guard.py": {
       "hash": "4fb78c060e4fd503ef5d939847450d2f439fe85030de7ab940ee1089dd0925e8",
@@ -326,8 +326,8 @@
       "size": 10628
     },
     "backend/api/v1_discovery.py": {
-      "hash": "ac255e0e3871fbfec43867c552ff91225a3d32f6be07146664e7de93e44877b7",
-      "size": 26159
+      "hash": "421dbd4ff44c13d4c14d5390363cf74397492b235f96f96195ef83dcdda86425",
+      "size": 27752
     },
     "backend/api/__init__.py": {
       "hash": "95ca21760c0e54aaa779f58966f119a05048a633940bceec4142881eaebf111b",
@@ -338,16 +338,16 @@
       "size": 2437
     },
     "backend/api/v1_supervision.py": {
-      "hash": "07f514add81533f497bbf9f0c1d32765df91cd7a9290f7892e61da4cf7034183",
-      "size": 16141
+      "hash": "41353781169394131f76ec57a207bdceda3310c4666c9ca13bcc3ee64dce5d4e",
+      "size": 15871
     },
     "backend/api/v1_features.py": {
       "hash": "686e64f1996b339bc8d9409eb21f40090605992a57a1d56eae507ecc681dd345",
       "size": 2480
     },
     "backend/api/v1_admin.py": {
-      "hash": "8c838d7a6eee63a0e83cb82bc9255db0d2795dec4f0d5eb8597c769a12b26755",
-      "size": 18291
+      "hash": "adaa0ac8ef0c31ef28435691082fe93af9d20e93c308ca611489f65c637a2291",
+      "size": 21422
     },
     "backend/api/v1_debug.py": {
       "hash": "95d5647895aa461ddf098ed154f49016f44b35334e3a05516cee720ff3d517f8",
@@ -358,16 +358,16 @@
       "size": 4192
     },
     "backend/services/science_runs.py": {
-      "hash": "a130e2f834e61bf6477b02f465834c77267f7324f7dea2c0e0dbf687174706d6",
-      "size": 11637
+      "hash": "a47d0b35360807cea1cd3e63622e006af5921f997996eec0d41d6375b0856ba2",
+      "size": 12141
     },
     "backend/services/auth.py": {
-      "hash": "8096183830c7672bf7a48072cd130991f37babefaa4bca44e5391a3ef2dfbb10",
-      "size": 2423
+      "hash": "18f17a81a0d01460fa826158737e5648fc2c98d4918bd76d0be4ec86c80a9690",
+      "size": 7166
     },
     "backend/services/annotation.py": {
-      "hash": "8e1ba99d70598476d62db1e82e8af6b6ee16eb35e477838e0e49e4654e3f5440",
-      "size": 2739
+      "hash": "180d8de142fe7dd0e8881be50548b5923d318a16e8afa96194f0f5203fec43c3",
+      "size": 3126
     },
     "backend/services/query_builder.py": {
       "hash": "b25cf5dbc9bbeda45d3342d82f1961bbdf979e85c0040c6dc3db18ec15f29ca1",
@@ -390,8 +390,8 @@
       "size": 1995
     },
     "backend/services/upload_jobs.py": {
-      "hash": "702e5d67de595455a1f472b57b1476c860df6ebdddf921bc01daf9f1ed01c833",
-      "size": 4361
+      "hash": "2386bac247960933e6b2eae686076f25ca6a8614457a38478ba244c76595f20c",
+      "size": 4742
     },
     "backend/services/training_export.py": {
       "hash": "f35a15147a20f273ee6635dd6c32f3d4a2af10a96aa3d7489b07099c0826df38",
@@ -442,8 +442,8 @@
       "size": 8608
     },
     "scripts/guardian.py": {
-      "hash": "eeeda0bb6b0327a9e8eebda6c9f4b2cbe97a362e132af2b99a9f5d407cca7864",
-      "size": 10103
+      "hash": "981d733a098c8ed2ea9cf041a2d5a24c892418ce0286f156bb22615167ffbabc",
+      "size": 10866
     },
     "scripts/bn_add_cog_affect_bins.py": {
       "hash": "ae38d8893eac6749feeca352a2ff28e3821475f4f03b7b091af7e5604aa58e40",
@@ -541,6 +541,14 @@
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
     },
+    "frontend/apps/monitor/src/main.jsx": {
+      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
+      "size": 373
+    },
+    "frontend/apps/monitor/src/App.jsx": {
+      "hash": "43b452c6752e0ceee093be61664abcb58a5fde99c9ad3395c56df6a28483d2ba",
+      "size": 39980
+    },
     "frontend/apps/admin/index.html": {
       "hash": "37620e963b95668174bc0af8fa959f0ce906c329b1a20a7d33bbf931f4ccb8ff",
       "size": 337
@@ -560,6 +568,22 @@
     "frontend/apps/admin/postcss.config.js": {
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
+    },
+    "frontend/apps/admin/public/feature_navigator.html": {
+      "hash": "34e053df7aa74954b21abd14ebc5cbf4d41fac41f373933dec1a436657bc7caf",
+      "size": 38447
+    },
+    "frontend/apps/admin/public/feature_onboarding.html": {
+      "hash": "2531b0e0427affe6ebdc5d5d5ebad87ada036492c9d90b96e20f8032f580ab72",
+      "size": 2717
+    },
+    "frontend/apps/admin/src/main.jsx": {
+      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
+      "size": 373
+    },
+    "frontend/apps/admin/src/App.jsx": {
+      "hash": "46d81de0a08211bac1fd5465ba1b6dc83924580484f3787ef5f8bb1361880442",
+      "size": 47210
     },
     "frontend/apps/explorer/index.html": {
       "hash": "12db1e86c2b229a0e0ca1f3a39351867e624f738b444d02ab5a9211de041cc4c",
@@ -581,6 +605,18 @@
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
     },
+    "frontend/apps/explorer/src/ImageDetailModal.jsx": {
+      "hash": "9fa25b2366b373ffd7bceb70e6ea6bbe2b1be5e90028b2e46e867d8f0f0caa46",
+      "size": 45022
+    },
+    "frontend/apps/explorer/src/main.jsx": {
+      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
+      "size": 373
+    },
+    "frontend/apps/explorer/src/App.jsx": {
+      "hash": "0bcd9afea646b50bb6d2efab92dbf233bcfa63cc79e04a4e3ba9f91def430186",
+      "size": 37765
+    },
     "frontend/apps/workbench/index.html": {
       "hash": "fe20d9404f85762c1cfe70d0fac4f317a6f6e5ddcf0283700ab7b5b534f721c7",
       "size": 358
@@ -600,42 +636,6 @@
     "frontend/apps/workbench/postcss.config.js": {
       "hash": "190c877db466995bf1482f4a16abd06e04a89ede3119341e2a86ff96e1737b27",
       "size": 80
-    },
-    "frontend/apps/monitor/src/main.jsx": {
-      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
-      "size": 373
-    },
-    "frontend/apps/monitor/src/App.jsx": {
-      "hash": "43b452c6752e0ceee093be61664abcb58a5fde99c9ad3395c56df6a28483d2ba",
-      "size": 39980
-    },
-    "frontend/apps/admin/public/feature_navigator.html": {
-      "hash": "34e053df7aa74954b21abd14ebc5cbf4d41fac41f373933dec1a436657bc7caf",
-      "size": 38447
-    },
-    "frontend/apps/admin/public/feature_onboarding.html": {
-      "hash": "2531b0e0427affe6ebdc5d5d5ebad87ada036492c9d90b96e20f8032f580ab72",
-      "size": 2717
-    },
-    "frontend/apps/admin/src/main.jsx": {
-      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
-      "size": 373
-    },
-    "frontend/apps/admin/src/App.jsx": {
-      "hash": "46d81de0a08211bac1fd5465ba1b6dc83924580484f3787ef5f8bb1361880442",
-      "size": 47210
-    },
-    "frontend/apps/explorer/src/ImageDetailModal.jsx": {
-      "hash": "9fa25b2366b373ffd7bceb70e6ea6bbe2b1be5e90028b2e46e867d8f0f0caa46",
-      "size": 45022
-    },
-    "frontend/apps/explorer/src/main.jsx": {
-      "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
-      "size": 373
-    },
-    "frontend/apps/explorer/src/App.jsx": {
-      "hash": "0bcd9afea646b50bb6d2efab92dbf233bcfa63cc79e04a4e3ba9f91def430186",
-      "size": 37765
     },
     "frontend/apps/workbench/src/main.jsx": {
       "hash": "aecd7f4a801b7e5bd868bb7e49db59f18609f03847caf826c5f14548ff6ed2c2",
@@ -678,7 +678,7 @@
     "check_bn_db_health": false
   },
   "root_files": [
-    ".git",
+    ".env.example",
     ".gitignore",
     "CANONICAL_ANCHOR.json",
     "Makefile",
@@ -688,8 +688,10 @@
     "deconcat.py",
     "governance.lock",
     "install.sh",
+    "pyproject.toml",
     "release.keep.yml",
     "requirements-install.txt",
+    "requirements.txt",
     "science_tag_coverage_v1.json",
     "v3_governance.yml"
   ]

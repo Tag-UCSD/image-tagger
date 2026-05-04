@@ -5,7 +5,16 @@ __pycache__/
 **/__pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+.Python
+
+# Local environment (Task A-1) — never commit real secrets.
 .env
+.env.local
+.env.*.local
+
+# Local-only developer scratch files
+personal_notes.txt
 
 # Agent/AI-related files
 .claude/

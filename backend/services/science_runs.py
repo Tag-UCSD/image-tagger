@@ -111,7 +111,11 @@ def ensure_science_run(
             existing.error_message = None
             existing.trigger_source = trigger_source
             db.add(existing)
-            db.commit()
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+                raise
             db.refresh(existing)
         return existing
 
@@ -125,7 +129,11 @@ def ensure_science_run(
         is_current=True,
     )
     db.add(run)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(run)
     return run
 
@@ -197,13 +205,26 @@ def queue_missing_science_runs(
     }
 
 
+def _safe_commit(db: Session) -> None:
+    """Commit and roll back on failure.
+
+    Centralised so every science-run state-transition writes go through
+    the same rollback-on-error pattern (Task A-4).
+    """
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
 def mark_run_started(db: Session, run_id: int) -> None:
     run = db.query(ScienceRun).filter(ScienceRun.id == run_id).first()
     if run:
         run.status = "RUNNING"
         run.started_at = datetime.now(timezone.utc)
         db.add(run)
-        db.commit()
+        _safe_commit(db)
 
 
 def mark_run_completed(db: Session, run_id: int) -> None:
@@ -212,7 +233,7 @@ def mark_run_completed(db: Session, run_id: int) -> None:
         run.status = "COMPLETED"
         run.completed_at = datetime.now(timezone.utc)
         db.add(run)
-        db.commit()
+        _safe_commit(db)
 
 
 def mark_run_failed(db: Session, run_id: int, error: str) -> None:
@@ -222,7 +243,7 @@ def mark_run_failed(db: Session, run_id: int, error: str) -> None:
         run.completed_at = datetime.now(timezone.utc)
         run.error_message = str(error)[:2000]
         db.add(run)
-        db.commit()
+        _safe_commit(db)
 
 
 def get_current_run_for_image(db: Session, image_id: int) -> ScienceRun | None:
@@ -276,7 +297,7 @@ def persist_science_tags(
         db.add(tag)
         inserted += 1
     if inserted:
-        db.commit()
+        _safe_commit(db)
     return inserted
 
 
@@ -305,7 +326,7 @@ def persist_science_artifact(
         if storage_path is not None:
             existing.storage_path = storage_path
         db.add(existing)
-        db.commit()
+        _safe_commit(db)
         db.refresh(existing)
         return existing
 
@@ -319,7 +340,7 @@ def persist_science_artifact(
         meta_json=meta_json,
     )
     db.add(artifact)
-    db.commit()
+    _safe_commit(db)
     db.refresh(artifact)
     return artifact
 
