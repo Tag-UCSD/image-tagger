@@ -10,6 +10,7 @@ from backend.middleware.request_context import RequestContextMiddleware
 from backend.services.storage import get_image_storage_root
 from backend.settings import settings
 from backend.api import (
+    health,
     v1_annotation,
     v1_admin,
     v1_supervision,
@@ -92,6 +93,7 @@ app.add_middleware(RequestContextMiddleware)
 register_exception_handlers(app)
 
 # Router wiring
+app.include_router(health.router)
 app.include_router(v1_annotation.router)
 app.include_router(v1_admin.router)
 app.include_router(v1_supervision.router)
@@ -104,12 +106,6 @@ app.include_router(v1_vlm_health.router)
 # Static file mount for image assets
 IMAGE_STORAGE_ROOT = get_image_storage_root()
 app.mount("/static", StaticFiles(directory=str(IMAGE_STORAGE_ROOT)), name="static")
-
-
-@app.get("/health")
-def health_check():
-    """Kubernetes/Docker Health Probe"""
-    return {"status": "healthy", "version": VERSION}
 
 
 @app.get("/")

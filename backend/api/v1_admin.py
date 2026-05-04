@@ -17,6 +17,7 @@ from backend.services.auth import require_admin
 from backend.services.storage import get_image_storage_root, to_static_path
 from backend.services.costs import get_total_spent, log_vlm_usage
 from backend.services.vlm import describe_vlm_configuration, update_vlm_config, get_vlm_engine, StubEngine
+from backend.settings import settings
 
 logger = logging.getLogger(__name__)
 from backend.models.config import ToolConfig
@@ -77,21 +78,27 @@ async def update_model(
 def _get_budget_hard_limit() -> float:
     """Resolve the hard USD budget limit for VLM usage.
 
-    Priority:
-    1. VLM_HARD_LIMIT_USD env var
-    2. COST_HARD_LIMIT_USD env var
-    3. Conservative default of 15.0 USD
-    """ 
-    for key in ("VLM_HARD_LIMIT_USD", "COST_HARD_LIMIT_USD"):
-        raw = os.getenv(key)
-        if raw is None:
-            continue
+    The canonical source is the typed ``settings.vlm_hard_limit_usd``
+    (Task A-1). It is required in production and the lifespan startup
+    refuses to boot when it is missing, so reaching the dev fallback
+    here means we are running outside production with no value set.
+
+    ``COST_HARD_LIMIT_USD`` is preserved as a one-off legacy override so
+    pre-A-1 deployments keep working until they are migrated.
+    """
+    primary = settings.vlm_hard_limit_usd
+    if primary is not None and primary > 0:
+        return float(primary)
+
+    legacy = os.getenv("COST_HARD_LIMIT_USD")
+    if legacy is not None:
         try:
-            value = float(raw)
+            value = float(legacy)
             if value > 0:
                 return value
         except (TypeError, ValueError):
-            continue
+            pass
+
     return 15.0
 
 @router.get("/budget", response_model=BudgetStatus)
@@ -127,7 +134,7 @@ async def get_budget(
 
 @router.get("/costs/daily")
 async def get_daily_costs(
-    days: int = 30,
+    days: int = Query(default=30, ge=1, le=90),
     db: Session = Depends(get_db),
     user = Depends(require_admin),
 ) -> List[Dict[str, Any]]:
@@ -135,15 +142,14 @@ async def get_daily_costs(
 
     The response is a list of objects of the form:
     { "day": "YYYY-MM-DD", "total_cost": float }
+
+    Bounds on ``days`` are enforced via FastAPI's ``Query`` constraints
+    (Task A-4) — out-of-range values are rejected with the contract
+    ``VALIDATION_ERROR`` envelope rather than silently clamped.
     """
     from datetime import datetime, timedelta
 
     from backend.models.usage import ToolUsage
-
-    if days <= 0:
-        days = 1
-    if days > 90:
-        days = 90
 
     now = datetime.utcnow()
     start_ts = now - timedelta(days=days - 1)
