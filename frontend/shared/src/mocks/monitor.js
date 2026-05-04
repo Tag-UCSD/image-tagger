@@ -38,3 +38,41 @@ export const irrResponse = {
 };
 
 export const irrEmptyResponse = { rows: [] };
+
+export const validationsResponse = [
+  {
+    validation_id: 9101,
+    image_id: 201,
+    rater: "demo.tagger",
+    value: 1,
+    created_at: "2026-05-04T12:15:00Z",
+  },
+  {
+    validation_id: 9102,
+    image_id: 201,
+    rater: "demo.supervisor",
+    value: 0,
+    created_at: "2026-05-04T12:18:00Z",
+  },
+];
+
+export const inspectorResponse = {
+  image: {
+    image_id: 201,
+    url: "https://picsum.photos/seed/201/1280/960",
+  },
+  tags: ["daylight", "window", "biophilic"],
+  features: ["light.daylight_ratio", "texture.visual_complexity"],
+  validations: validationsResponse,
+};
+
+export const pipelineHealthResponse = {
+  import_ok: true,
+  cv2_available: true,
+  analyzers_by_tier: {
+    tier_1: ["color", "shape"],
+    tier_2: ["daylight", "vegetation"],
+  },
+  warnings: [],
+  analyzer_errors: [],
+};
