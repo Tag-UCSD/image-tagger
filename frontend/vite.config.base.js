@@ -1,5 +1,5 @@
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import react from "@vitejs/plugin-react";
+import path from "path";
 
 /**
  * Shared Vite Configuration
@@ -9,29 +9,30 @@ export default function getBaseConfig(dirname) {
   const appName = path.basename(dirname);
   return {
     base: `/${appName}/`,
+    envDir: path.resolve(dirname, "../.."),
     plugins: [react()],
     resolve: {
       alias: {
-        '@shared': path.resolve(dirname, '../../shared/src'),
-        '@': path.resolve(dirname, './src'),
+        "@shared": path.resolve(dirname, "../../shared/src"),
+        "@": path.resolve(dirname, "./src"),
       },
     },
     server: {
       proxy: {
-        '/api': {
-          target: 'http://127.0.0.1:8000',
+        "/api": {
+          target: "http://127.0.0.1:8000",
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '/v1'),
+          rewrite: (path) => path.replace(/^\/api/, "/v1"),
         },
-        '/static': {
-            target: 'http://127.0.0.1:8000',
-            changeOrigin: true
-        }
+        "/static": {
+          target: "http://127.0.0.1:8000",
+          changeOrigin: true,
+        },
       },
     },
     build: {
-        outDir: `../../dist/${appName}`,
-        emptyOutDir: true
-    }
+      outDir: `../../dist/${appName}`,
+      emptyOutDir: true,
+    },
   };
 }
