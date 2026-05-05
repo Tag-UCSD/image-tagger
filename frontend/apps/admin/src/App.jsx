@@ -132,16 +132,6 @@ const VLMConfigPanel = () => {
       </div>
 
 
-<div className="mt-2 p-2 rounded-md bg-blue-50 border border-blue-100 text-[11px] text-blue-900 space-y-1">
-  <p className="font-semibold">VLM configuration: handle with care</p>
-  <ul className="list-disc ml-4 space-y-0.5">
-    <li>Changes here affect which provider (Gemini, OpenAI, Anthropic, stub) is used for all VLM-assisted analyses.</li>
-    <li>Always verify that API keys are detected and that the effective engine looks correct before enabling real runs.</li>
-    <li>After editing settings, run a small test on a known image ID and confirm the response looks plausible.</li>
-    <li>If tests fail or output looks broken, revert to a safe configuration and notify an engineer.</li>
-  </ul>
-</div>
-
       <div className="space-y-3">
         <div className="space-y-1">
           <label className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
@@ -693,7 +683,6 @@ async function loadUploadJobs(limit = 20) {
         setUploadJobs(Array.isArray(jobs) ? jobs : []);
     } catch (err) {
         console.error('Failed to load upload jobs', err);
-        // We treat this as a soft failure to avoid breaking the main admin load.
     } finally {
         setUploadJobsLoading(false);
     }
@@ -703,7 +692,6 @@ function handleUploadCompleted(data) {
     if (data && typeof data.job_id === 'number') {
         setLastUploadJobId(data.job_id);
     }
-    // Refresh the job list so progress is visible shortly after upload.
     loadUploadJobs();
 }
 
@@ -756,7 +744,6 @@ function handleUploadCompleted(data) {
         try {
             const resp = await api.post(`/kill-switch?active=${nextActive}`);
             if (resp) {
-                // Backend returns BudgetStatus; keep UI in sync.
                 setBudget(resp);
                 setKillSwitchActive(!!resp.is_kill_switched);
             }
@@ -1013,15 +1000,6 @@ function handleUploadCompleted(data) {
         list of image IDs (or leave blank to export nothing).
     </p>
 
-<div className="mt-1 mb-2 p-2 rounded-md bg-blue-50 border border-blue-100 text-[11px] text-blue-900 space-y-1">
-    <p className="font-semibold">What this export is for</p>
-    <ul className="list-disc ml-4 space-y-0.5">
-        <li>Each row in the exported JSON corresponds to an image/case with its validated tags.</li>
-        <li>Use this for training downstream models (BNs, regressions, or fine-tuned vision models).</li>
-        <li>Keep track of which canon version and schema were active when you generated the export.</li>
-        <li>For reproducible studies, store export parameters (image IDs, filters) alongside your analysis code.</li>
-    </ul>
-</div>
     <textarea
         className="w-full text-xs border border-gray-200 rounded p-2 mb-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
         rows={2}

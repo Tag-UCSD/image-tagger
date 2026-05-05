@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Header, ApiClient, Button } from '@shared';
-import { AlertTriangle, TrendingUp, Users, Activity, BarChart2, RefreshCcw, Eye, X } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Users, Activity, BarChart2, RefreshCcw, X } from 'lucide-react';
 
 const api = new ApiClient('/api/v1/monitor', { 'X-User-Role': 'admin' });
 const debugApi = new ApiClient('/api/v1/debug', { 'X-User-Role': 'admin' });
@@ -10,10 +10,6 @@ export default function MonitorApp() {
     const [irrStats, setIrrStats] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [inspectorImage, setInspectorImage] = useState(null);
-    const [inspectorRecords, setInspectorRecords] = useState([]);
-    const [inspectorLoading, setInspectorLoading] = useState(false);
-    const [inspectorError, setInspectorError] = useState(null);
     const [pipelineHealth, setPipelineHealth] = useState(null);
     const [pipelineLoading, setPipelineLoading] = useState(false);
     const [pipelineError, setPipelineError] = useState(null);
@@ -39,7 +35,6 @@ export default function MonitorApp() {
             setError(err.message || 'Failed to load supervisor dashboard');
         } finally {
             setLoading(false);
-            setPipelineLoading(false);
         }
     }
 
@@ -78,28 +73,6 @@ async function loadPipelineHealth() {
         setPipelineLoading(false);
     }
 }
-    async function openInspector(row) {
-        setInspectorImage({ image_id: row.image_id, filename: row.filename });
-        setInspectorRecords([]);
-        setInspectorError(null);
-        setInspectorLoading(true);
-        try {
-            const data = await api.get(`/image/${row.image_id}/validations`);
-            setInspectorRecords(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error('Failed to load inspection data', err);
-            setInspectorError(err.message || 'Failed to load inspection data');
-        } finally {
-            setInspectorLoading(false);
-        }
-    }
-
-    function closeInspector() {
-        setInspectorImage(null);
-        setInspectorRecords([]);
-        setInspectorError(null);
-    }
-
     return (
         <div className="min-h-screen bg-gray-100 pb-10">
             <Header appName="Supervisor" title="Quality Control Dashboard" />
@@ -129,16 +102,6 @@ async function loadPipelineHealth() {
                     </div>
                 </div>
 
-
-<div className="mt-2 p-2 rounded-md bg-blue-50 border border-blue-100 text-[11px] text-blue-900 space-y-1">
-    <p className="font-semibold">How to use the Supervisor dashboard</p>
-    <ul className="list-disc ml-4 space-y-0.5">
-        <li>This view is for supervisors and PIs to track team throughput, agreement, and possible quality issues.</li>
-        <li>Use the metrics above to spot low volume, low IRR, or spikes in errors that may need investigation.</li>
-        <li>Drill into specific images or annotators using Tag Inspector when a pattern looks suspicious.</li>
-        <li>If metric tiles fail to load or look wrong, treat that as a system issue and notify an engineer.</li>
-    </ul>
-</div>
 
                 {/* Top Metrics */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -367,12 +330,11 @@ async function loadPipelineHealth() {
                                             <th className="pb-3">Agreement</th>
                                             <th className="pb-3">Conflicts</th>
                                             <th className="pb-3">Raters</th>
-                                            <th className="pb-3 text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {irrStats.map(row => (
-                                            <IRRRow key={row.image_id} row={row} onInspect={() => openInspector(row)} />
+                                            <IRRRow key={row.image_id} row={row} />
                                         ))}
                                         {!irrStats.length && !loading && (
                                             <tr>
@@ -387,15 +349,6 @@ async function loadPipelineHealth() {
                         </div>
                     </div>
                 </div>
-                {inspectorImage && (
-                    <InspectorDrawer
-                        image={inspectorImage}
-                        records={inspectorRecords}
-                        loading={inspectorLoading}
-                        error={inspectorError}
-                        onClose={closeInspector}
-                    />
-                )}
             </div>
         </div>
     );
@@ -446,7 +399,7 @@ function TaggerRow({ user }) {
     );
 }
 
-function IRRRow({ row, onInspect }) {
+function IRRRow({ row }) {
     const agreePct = (row.agreement_score || 0) * 100;
     const conflict = row.conflict_count || 0;
     const raters = Array.isArray(row.raters) ? row.raters : [];
@@ -483,315 +436,3 @@ function IRRRow({ row, onInspect }) {
     );
 }
 
-
-function InspectorDrawer({ image, records, loading, error, onClose }) {
-    const [detail, setDetail] = useState(null);
-    const [detailLoading, setDetailLoading] = useState(true);
-    const [detailError, setDetailError] = useState(null);
-    const [showHelp, setShowHelp] = useState(false);
-
-    useEffect(() => {
-        if (!image || !image.image_id) {
-            return;
-        }
-
-        let cancelled = false;
-
-        async function fetchInspector() {
-            setDetailLoading(true);
-            setDetailError(null);
-            try {
-                const resp = await fetch(`/api/v1/monitor/image/${image.image_id}/inspector`);
-                if (!resp.ok) {
-                    throw new Error(`Inspector HTTP ${resp.status}`);
-                }
-                const data = await resp.json();
-                if (!cancelled) {
-                    setDetail(data);
-                }
-            } catch (err) {
-                console.error('Failed to load inspector detail', err);
-                if (!cancelled) {
-                    setDetailError(err.message || 'Failed to load inspector detail');
-                }
-            } finally {
-                if (!cancelled) {
-                    setDetailLoading(false);
-                }
-            }
-        }
-
-        fetchInspector();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [image?.image_id]);
-
-    const isBusy = loading || detailLoading;
-    const effectiveError = error || detailError;
-
-    const tags = detail?.tags || [];
-    const features = detail?.features || [];
-    const inspectorValidations = detail?.validations || records || [];
-
-    return (
-        <div className="fixed inset-0 bg-black/30 flex justify-end z-40">
-            <div className="w-full max-w-5xl bg-white h-full shadow-xl flex flex-col">
-                <div className="px-4 py-3 border-b flex items-center justify-between">
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
-                            Tag Inspector
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                            Image {image.image_id} · {image.filename}
-                        </p>
-                        {detail?.image?.url && (
-                            <p className="text-[11px] text-gray-400">
-                                Source: {detail.image.url}
-                            </p>
-                        )}
-                    </div>
-
-<div className="flex items-center gap-1">
-    <button
-        type="button"
-        onClick={() => setShowHelp(prev => !prev)}
-        className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
-    >
-        <HelpCircle size={16} />
-    </button>
-    <button
-        type="button"
-        onClick={onClose}
-        className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
-    >
-        <X size={16} />
-    </button>
-</div>
-                </div>
-
-
-{showHelp && (
-    <div className="mx-4 my-2 p-2 rounded-md bg-blue-50 border border-blue-100 text-[11px] text-blue-900 space-y-1">
-        <p className="font-semibold">How to read Tag Inspector</p>
-        <ul className="list-disc ml-4 space-y-0.5">
-            <li>This view is read-only and for supervisors/admins.</li>
-            <li>The top snapshot shows how many science attributes, indices, and the IRR value (if available) were computed for this image.</li>
-            <li>The High-level indices table lists the composite indices that can feed BN models (e.g., restorativeness, clutter, fluency).</li>
-            <li>The Science attributes table shows the raw numeric features computed by the pipeline for this particular room image.</li>
-            <li>The Human validations table shows who rated which attributes, with values, dwell times, and timestamps.</li>
-        </ul>
-    </div>
-)}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-                    {isBusy && (
-                        <div className="text-gray-500 flex items-center gap-2">
-                            <Activity className="animate-spin" size={14} />
-                            Loading inspector data…
-                        </div>
-                    )}
-
-                    {effectiveError && (
-                        <div className="text-red-600 text-xs">
-                            {effectiveError}
-                        </div>
-                    )}
-
-                    {!isBusy && !effectiveError && (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                                {/* Image preview + basic meta */}
-                                <div className="md:col-span-1 space-y-3">
-                                    <div className="border rounded-lg overflow-hidden bg-gray-50">
-                                        {detail?.image?.url ? (
-                                            <img
-                                                src={detail.image.url}
-                                                alt={image.filename}
-                                                className="w-full h-40 object-contain bg-black/5"
-                                            />
-                                        ) : (
-                                            <div className="h-40 flex items-center justify-center text-gray-400 text-[11px]">
-                                                No preview available
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="font-semibold text-[11px] text-gray-700">
-                                            Science snapshot
-                                        </div>
-                                        <div className="text-[11px] text-gray-500 space-y-0.5">
-                                            <div>
-                                                <span className="font-medium">Science attrs:</span>{" "}
-                                                {features.length}
-                                            </div>
-                                            <div>
-                                                <span className="font-medium">Indices:</span>{" "}
-                                                {tags.length}
-                                            </div>
-                                            {detail?.bn?.irr !== undefined && detail.bn.irr !== null && (
-                                                <div>
-                                                    <span className="font-medium">IRR:</span>{" "}
-                                                    {detail.bn.irr.toFixed
-                                                        ? detail.bn.irr.toFixed(3)
-                                                        : detail.bn.irr}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* High-level indices / tags */}
-                                <div className="md:col-span-2">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="font-semibold text-[11px] text-gray-700">
-                                            High-level indices (BN inputs)
-                                        </div>
-                                        <div className="text-[11px] text-gray-400">
-                                            {tags.length ? `${tags.length} indices` : "No indices yet"}
-                                        </div>
-                                    </div>
-                                    <div className="border rounded-lg max-h-56 overflow-y-auto">
-                                        {tags.length ? (
-                                            <table className="w-full text-left text-[11px]">
-                                                <thead className="bg-gray-50 border-b">
-                                                    <tr className="text-gray-500 uppercase tracking-wide">
-                                                        <th className="py-2 px-3">Index</th>
-                                                        <th className="py-2 px-3">Bin / Value</th>
-                                                        <th className="py-2 px-3">Label</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {tags.map(tag => (
-                                                        <tr key={tag.key} className="hover:bg-gray-50">
-                                                            <td className="py-1.5 px-3 text-gray-700">
-                                                                {tag.key}
-                                                            </td>
-                                                            <td className="py-1.5 px-3 text-gray-800">
-                                                                {tag.bin || tag.value || "—"}
-                                                            </td>
-                                                            <td className="py-1.5 px-3 text-gray-500">
-                                                                {tag.label || tag.description || "—"}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        ) : (
-                                            <div className="p-3 text-[11px] text-gray-400">
-                                                No composite indices have been stored yet for this image.
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Features + validations */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="font-semibold text-[11px] text-gray-700">
-                                            Science attributes
-                                        </div>
-                                        <div className="text-[11px] text-gray-400">
-                                            {features.length ? `${features.length} attributes` : "—"}
-                                        </div>
-                                    </div>
-                                    <div className="border rounded-lg max-h-64 overflow-y-auto">
-                                        {features.length ? (
-                                            <table className="w-full text-left text-[11px]">
-                                                <thead className="bg-gray-50 border-b">
-                                                    <tr className="text-gray-500 uppercase tracking-wide">
-                                                        <th className="py-2 px-3">Key</th>
-                                                        <th className="py-2 px-3">Value</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {features.map(feat => (
-                                                        <tr key={feat.key} className="hover:bg-gray-50">
-                                                            <td className="py-1.5 px-3 text-gray-700">
-                                                                {feat.key}
-                                                            </td>
-                                                            <td className="py-1.5 px-3 text-gray-800">
-                                                                {feat.value === null || feat.value === undefined
-                                                                    ? "—"
-                                                                    : feat.value.toFixed
-                                                                    ? feat.value.toFixed(3)
-                                                                    : feat.value}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        ) : (
-                                            <div className="p-3 text-[11px] text-gray-400">
-                                                No science attributes recorded yet for this image.
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="font-semibold text-[11px] text-gray-700">
-                                            Human validations
-                                        </div>
-                                        <div className="text-[11px] text-gray-400">
-                                            {inspectorValidations.length
-                                                ? `${inspectorValidations.length} validations`
-                                                : "—"}
-                                        </div>
-                                    </div>
-                                    <div className="border rounded-lg max-h-64 overflow-y-auto">
-                                        {inspectorValidations.length ? (
-                                            <table className="w-full text-left text-[11px]">
-                                                <thead className="bg-gray-50 border-b">
-                                                    <tr className="text-gray-500 uppercase tracking-wide">
-                                                        <th className="py-2 px-3">User</th>
-                                                        <th className="py-2 px-3">Attribute</th>
-                                                        <th className="py-2 px-3">Value</th>
-                                                        <th className="py-2 px-3">Dwell (ms)</th>
-                                                        <th className="py-2 px-3">When</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {inspectorValidations.map(r => (
-                                                        <tr key={r.id} className="hover:bg-gray-50">
-                                                            <td className="py-1.5 px-3 text-gray-800">
-                                                                {r.username || `user-${r.user_id}`}
-                                                            </td>
-                                                            <td className="py-1.5 px-3 text-gray-600">
-                                                                {r.attribute_key}
-                                                            </td>
-                                                            <td className="py-1.5 px-3 text-gray-600">
-                                                                {r.value && r.value.toFixed
-                                                                    ? r.value.toFixed(2)
-                                                                    : r.value}
-                                                            </td>
-                                                            <td className="py-1.5 px-3 text-gray-600">
-                                                                {r.duration_ms ?? "—"}
-                                                            </td>
-                                                            <td className="py-1.5 px-3 text-gray-400">
-                                                                {r.created_at
-                                                                    ? new Date(r.created_at).toLocaleString()
-                                                                    : "—"}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        ) : (
-                                            <div className="p-3 text-[11px] text-gray-400">
-                                                No human validations recorded yet for this image.
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}

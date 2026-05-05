@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Header, explorer, ErrorBanner, EmptyState, Pagination } from '@shared';
 import { Search as SearchIcon, AlertCircle } from 'lucide-react';
 import { SearchBar } from './SearchBar';

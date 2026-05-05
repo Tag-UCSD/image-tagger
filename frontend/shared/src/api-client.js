@@ -1,4 +1,4 @@
-// ─── Legacy class (kept for existing app components until B-3 through B-6) ───
+// ─── Legacy class — used by admin and monitor until those apps are rewritten ───
 
 export class ApiClient {
   constructor(baseUrl = "/api", defaultHeaders = {}) {
