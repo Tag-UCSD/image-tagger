@@ -238,6 +238,9 @@ async function handleMockRequest(input, init = {}) {
       );
     }
     const mocks = await import("./mocks/explorer.js");
+    if (state === "loading") {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+    }
     if (state === "empty") {
       return jsonResponse(
         cloneJson(mocks.searchEmptyResponse),
@@ -264,6 +267,9 @@ async function handleMockRequest(input, init = {}) {
     }
     const imageId = Number(path.split("/").pop());
     const mocks = await import("./mocks/explorer.js");
+    if (state === "loading") {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+    }
     return jsonResponse(
       { ...cloneJson(mocks.imageDetail), id: imageId },
       200,
