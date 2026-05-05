@@ -30,13 +30,17 @@ export default function ExplorerApp() {
   // Available room types (from first search or static)
   const [roomTypes, setRoomTypes] = useState([]);
 
-  // Initialize from URL on mount
+  // Initialize from URL and kick off the initial search on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setQuery(params.get('q') ?? '');
-    setRoomType(params.get('room_type') ?? '');
+    const q = params.get('q') ?? '';
+    const rt = params.get('room_type') ?? '';
     const p = params.get('page');
-    setPage(p ? Math.max(1, parseInt(p, 10)) : 1);
+    const pg = p ? Math.max(1, parseInt(p, 10)) : 1;
+    setQuery(q);
+    setRoomType(rt);
+    setPage(pg);
+    performSearch(q, rt, pg);
   }, []);
 
   // Update URL whenever search state changes
@@ -152,10 +156,6 @@ export default function ExplorerApp() {
     setSelectedImageId(null);
   };
 
-  // Initial search on mount
-  useEffect(() => {
-    performSearch(query, roomType, page);
-  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
