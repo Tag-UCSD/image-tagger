@@ -338,6 +338,16 @@ async function handleMockRequest(input, init = {}) {
         mockHeaders(),
       );
     }
+    if (
+      typeof window !== "undefined" &&
+      window.__MOCK_FLAGS?.monitorRole === "non-supervisor"
+    ) {
+      return jsonResponse(
+        { error: { code: "FORBIDDEN", message: "Forbidden" } },
+        403,
+        mockHeaders(),
+      );
+    }
     const mocks = await import("./mocks/monitor.js");
     return jsonResponse(cloneJson(mocks.velocityResponse), 200, mockHeaders());
   }
@@ -348,6 +358,16 @@ async function handleMockRequest(input, init = {}) {
       return jsonResponse(
         { error: { code: "MOCK_ERROR", message: "Mock monitor error" } },
         500,
+        mockHeaders(),
+      );
+    }
+    if (
+      typeof window !== "undefined" &&
+      window.__MOCK_FLAGS?.monitorRole === "non-supervisor"
+    ) {
+      return jsonResponse(
+        { error: { code: "FORBIDDEN", message: "Forbidden" } },
+        403,
         mockHeaders(),
       );
     }
@@ -695,6 +715,11 @@ export const monitor = {
         throw Object.assign(new Error("Mock monitor error"), {
           code: "MOCK_ERROR",
         });
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.monitorRole === "non-supervisor"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
       const mocks = await import("./mocks/monitor.js");
       return mocks.velocityResponse;
     }
@@ -711,6 +736,11 @@ export const monitor = {
         throw Object.assign(new Error("Mock monitor error"), {
           code: "MOCK_ERROR",
         });
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.monitorRole === "non-supervisor"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
       const mocks = await import("./mocks/monitor.js");
       if (state === "empty" || window.__MOCK_FLAGS?.irrEmpty)
         return mocks.irrEmptyResponse;
