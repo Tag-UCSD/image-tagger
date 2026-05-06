@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/workbench",        "destination": "/workbench/index.html" },
+    { "source": "/workbench/:path*", "destination": "/workbench/index.html" },
+    { "source": "/monitor",          "destination": "/monitor/index.html" },
+    { "source": "/monitor/:path*",   "destination": "/monitor/index.html" },
+    { "source": "/admin",            "destination": "/admin/index.html" },
+    { "source": "/admin/:path*",     "destination": "/admin/index.html" },
+    { "source": "/:path*",           "destination": "/explorer/index.html" }
+  ]
+}
