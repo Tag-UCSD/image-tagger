@@ -443,6 +443,16 @@ async function handleMockRequest(input, init = {}) {
   }
 
   if (path === "/v1/admin/budget" && method === "GET") {
+    if (
+      typeof window !== "undefined" &&
+      window.__MOCK_FLAGS?.adminRole === "non-admin"
+    ) {
+      return jsonResponse(
+        { error: { code: "FORBIDDEN", message: "Forbidden" } },
+        403,
+        mockHeaders(),
+      );
+    }
     const mocks = await import("./mocks/admin.js");
     return jsonResponse(cloneJson(mocks.budgetResponse), 200, mockHeaders());
   }
@@ -763,6 +773,11 @@ export const admin = {
         throw Object.assign(new Error("Mock upload error"), {
           code: "MOCK_ERROR",
         });
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.adminRole === "non-admin"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
       const mocks = await import("./mocks/admin.js");
       return {
         ...mocks.uploadResponse,
@@ -782,6 +797,11 @@ export const admin = {
   async getBudget() {
     if (USE_MOCKS) {
       await mockDelay();
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.adminRole === "non-admin"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
       const mocks = await import("./mocks/admin.js");
       return mocks.budgetResponse;
     }
@@ -791,6 +811,11 @@ export const admin = {
   async setKillSwitch(enabled) {
     if (USE_MOCKS) {
       await mockDelay();
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.adminRole === "non-admin"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
       const mocks = await import("./mocks/admin.js");
       return enabled ? mocks.killSwitchEnabled : mocks.killSwitchDisabled;
     }
