@@ -110,7 +110,8 @@ export function UploadPanel() {
                     multiple
                     accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                     className="sr-only"
-                    aria-hidden="true"
+                    tabIndex={-1}
+                    aria-label="Select image files to upload"
                     onChange={(e) => {
                         if (e.target.files?.length) {
                             handleFiles(e.target.files);

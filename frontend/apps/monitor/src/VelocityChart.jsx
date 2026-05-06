@@ -31,21 +31,21 @@ export function VelocityChart({ series }) {
                 <h2 className="font-semibold text-gray-900 text-sm">Validation Velocity</h2>
             </div>
             {series.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-10">No velocity data yet.</p>
+                <p className="text-sm text-gray-600 text-center py-10">No velocity data yet.</p>
             ) : (
-                <div className="p-4">
+                <div className="p-4" role="img" aria-label="Validation velocity line chart">
                     <ResponsiveContainer width="100%" height={240}>
                         <LineChart data={series} margin={{ top: 4, right: 16, bottom: 4, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                             <XAxis
                                 dataKey="timestamp"
                                 tickFormatter={formatTick}
-                                tick={{ fontSize: 11, fill: '#9ca3af' }}
+                                tick={{ fontSize: 11, fill: '#4b5563' }}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <YAxis
-                                tick={{ fontSize: 11, fill: '#9ca3af' }}
+                                tick={{ fontSize: 11, fill: '#4b5563' }}
                                 tickLine={false}
                                 axisLine={false}
                                 allowDecimals={false}

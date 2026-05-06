@@ -59,21 +59,30 @@ export function IRRTable({ rows }) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead>
-                            <tr className="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                            <tr className="border-b border-gray-100">
                                 {COLUMNS.map(col => (
                                     <th
                                         key={col.key}
-                                        className="py-3 px-4 cursor-pointer select-none hover:text-gray-900 whitespace-nowrap"
-                                        onClick={() => handleHeaderClick(col.key)}
+                                        scope="col"
+                                        aria-sort={
+                                            sortKey === col.key
+                                                ? sortDir === 'asc' ? 'ascending' : 'descending'
+                                                : 'none'
+                                        }
+                                        className="py-3 px-4 whitespace-nowrap"
                                     >
-                                        <span className="inline-flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            className="inline-flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-wider hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-1 rounded"
+                                            onClick={() => handleHeaderClick(col.key)}
+                                        >
                                             {col.label}
                                             {sortKey === col.key
                                                 ? sortDir === 'asc'
                                                     ? <ChevronUp size={12} />
                                                     : <ChevronDown size={12} />
-                                                : <span className="w-3 inline-block" />}
-                                        </span>
+                                                : <span className="w-3 inline-block" aria-hidden="true" />}
+                                        </button>
                                     </th>
                                 ))}
                             </tr>
@@ -102,7 +111,7 @@ function IRRRow({ row }) {
         <tr className="hover:bg-gray-50 transition-colors">
             <td className="py-3 px-4">
                 <span className="font-medium text-gray-900">{row.attribute_name}</span>
-                <span className="ml-2 text-xs text-gray-400 font-mono">{row.attribute_key}</span>
+                <span className="ml-2 text-xs text-gray-600 font-mono">{row.attribute_key}</span>
             </td>
             <td className="py-3 px-4 font-mono text-gray-700">{(row.irr ?? 0).toFixed(2)}</td>
             <td className="py-3 px-4 text-gray-600">{row.n_pairs}</td>

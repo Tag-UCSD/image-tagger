@@ -31,7 +31,7 @@ export function KillSwitch({ active, onToggle }) {
                     Kill Switch
                 </h2>
                 <span className={`ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                    active ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
+                    active ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
                 }`}>
                     {active ? 'ACTIVE' : 'Inactive'}
                 </span>

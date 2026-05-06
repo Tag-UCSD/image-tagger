@@ -53,9 +53,9 @@ export default function AdminApp() {
         <div className="min-h-screen bg-gray-100 pb-10">
             <Header appName="Admin" title="Cost & Governance Cockpit" />
 
-            <div className="p-8 max-w-5xl mx-auto space-y-6">
+            <div className="px-4 py-6 sm:px-8 max-w-5xl mx-auto space-y-6">
                 <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-600">
                         Upload images, monitor budget, and control the kill switch.
                     </p>
                     <Button variant="secondary" onClick={loadData} disabled={appState === 'loading'}>

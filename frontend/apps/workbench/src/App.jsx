@@ -188,7 +188,7 @@ function AssignmentView({ current, count, formRef, submitting, submitError, onSu
         </div>
 
         {/* Keyboard hint */}
-        <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400 flex items-center gap-1.5">
+        <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-600 flex items-center gap-1.5">
           <kbd className="bg-gray-100 border border-gray-300 rounded px-1 py-0.5 font-mono text-[10px]">Enter</kbd>
           <span>to submit</span>
         </div>

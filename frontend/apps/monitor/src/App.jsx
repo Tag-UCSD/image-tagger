@@ -49,9 +49,9 @@ export default function MonitorApp() {
         <div className="min-h-screen bg-gray-100 pb-10">
             <Header appName="Supervisor" title="Quality Control Dashboard" />
 
-            <div className="p-8 max-w-5xl mx-auto space-y-6">
+            <div className="px-4 py-6 sm:px-8 max-w-5xl mx-auto space-y-6">
                 <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-600">
                         Monitor team validation velocity and inter-rater reliability.
                     </p>
                     <Button variant="secondary" onClick={loadData} disabled={appState === 'loading'}>

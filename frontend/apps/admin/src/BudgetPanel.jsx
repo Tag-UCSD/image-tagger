@@ -26,7 +26,7 @@ export function BudgetPanel({ budget }) {
                     </div>
                     <div>
                         <p className="text-[11px] text-gray-500 uppercase tracking-wide font-semibold">Remaining</p>
-                        <p className={`text-lg font-bold ${danger ? 'text-red-600' : 'text-emerald-600'}`}>
+                        <p className={`text-lg font-bold ${danger ? 'text-red-600' : 'text-emerald-700'}`}>
                             ${remaining_usd.toFixed(2)}
                         </p>
                     </div>

@@ -65,10 +65,10 @@ export const AttributeForm = forwardRef(function AttributeForm({ assignment, onS
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
       <div>
-        <label className="block text-sm font-semibold text-gray-800 mb-1">
+        <p className="text-sm font-semibold text-gray-800 mb-1">
           {attribute_name}
           {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
-        </label>
+        </p>
         <p className="text-sm text-gray-600 mb-3">{prompt}</p>
 
         {value_type === 'boolean' && (
