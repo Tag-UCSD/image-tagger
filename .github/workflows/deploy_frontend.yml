@@ -30,14 +30,16 @@ jobs:
 
       - name: Deploy to Vercel (production)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: npx vercel deploy --prod --yes --cwd frontend --token ${{ secrets.VERCEL_TOKEN }}
+        working-directory: frontend
+        run: npx vercel deploy --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy preview to Vercel
         if: github.event_name == 'pull_request'
-        run: npx vercel deploy --yes --cwd frontend --token ${{ secrets.VERCEL_TOKEN }}
+        working-directory: frontend
+        run: npx vercel deploy --yes --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
