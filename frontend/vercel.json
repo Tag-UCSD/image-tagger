@@ -1,8 +1,9 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install",
+  "installCommand": "npm install --include=dev",
   "framework": null,
+  "github": { "enabled": false },
   "rewrites": [
     { "source": "/workbench",        "destination": "/workbench/index.html" },
     { "source": "/workbench/:path*", "destination": "/workbench/index.html" },
