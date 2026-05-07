@@ -3,6 +3,7 @@
   "private": true,
   "version": "3.0.0",
   "type": "module",
+  "engines": { "node": "24.x" },
   "workspaces": [
     "apps/*",
     "shared"
@@ -14,17 +15,22 @@
     "dev:explorer": "vite apps/explorer --port 3004",
     "dev:preview": "vite shared --port 5173 --host 127.0.0.1",
     "dev:all": "concurrently \"npm run dev:workbench\" \"npm run dev:monitor\" \"npm run dev:admin\" \"npm run dev:explorer\"",
-    "build": "npm run build -w apps/workbench && npm run build -w apps/monitor && npm run build -w apps/admin && npm run build -w apps/explorer"
+    "build": "npm run build -w apps/workbench && npm run build -w apps/monitor && npm run build -w apps/admin && npm run build -w apps/explorer",
+    "preview": "node preview.mjs",
+    "test:responsive": "playwright test tests/responsive.spec.ts"
   },
   "dependencies": {
+    "lucide-react": "^0.292.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "lucide-react": "^0.292.0",
-    "recharts": "^2.9.0"
+    "recharts": "^2.9.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
+    "axe-playwright": "^2.2.2",
     "concurrently": "^8.2.2",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",

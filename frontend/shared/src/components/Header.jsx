@@ -17,7 +17,7 @@ export const Header = ({ title, appName }) => {
                 <div className="text-sm font-medium bg-surface-dark px-3 py-1 rounded border border-gray-700">
                     {title}
                 </div>
-                <div className="w-8 h-8 rounded-full bg-gray-600 border-2 border-gray-500"></div>
+                <div className="w-8 h-8 rounded-full bg-gray-600 border-2 border-gray-500" aria-hidden="true"></div>
             </div>
         </header>
     );
