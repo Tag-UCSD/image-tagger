@@ -1,0 +1,37 @@
+# Backend smoke-critical integration tests (Phase 1 Task A-11).
+#
+# Does not enforce a coverage threshold. Install deps from requirements.txt
+# (including torch CPU index for import-time science modules).
+name: Backend integration smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  integration-smoke:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run smoke-critical integration tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest backend/tests/integration/test_explorer.py \
+            backend/tests/integration/test_workbench.py \
+            backend/tests/integration/test_admin.py \
+            backend/tests/integration/test_monitor.py -v
