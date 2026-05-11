@@ -9,6 +9,7 @@ from fastapi import (
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
+from starlette.datastructures import UploadFile as StarletteUploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import select, update, func
 
@@ -348,7 +349,7 @@ async def _validate_upload_payload(request: Request) -> List[UploadFile]:
             ]
         ) from exc
 
-    files = [v for v in form.getlist("files") if isinstance(v, UploadFile)]
+    files = [v for v in form.getlist("files") if isinstance(v, StarletteUploadFile)]
     if not files:
         raise RequestValidationError(
             [
@@ -448,8 +449,7 @@ async def upload_images(
         image = Image(
             filename=original_name,
             storage_path=unique_name,
-            meta_data={},
-            source="admin_upload",
+            meta_data={"source": "admin_upload"},
         )
         db.add(image)
         db.flush()

@@ -102,7 +102,6 @@ class RequestContextMiddleware:
                 status=500,
                 duration_ms=duration_ms,
             )
-            reset_request_id(token)
             raise
         else:
             duration_ms = round((time.perf_counter() - start) * 1000.0, 2)

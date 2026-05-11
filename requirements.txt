@@ -27,6 +27,8 @@ uvicorn[standard]~=0.30
 # Imported directly in middleware/request_context.py and error_handlers.py
 # (not just transitively via fastapi), so pin it explicitly.
 starlette~=0.40
+# Required by Starlette/FastAPI for ``request.form()`` / multipart parsing.
+python-multipart~=0.0.20
 
 # ─── Validation / settings ──────────────────────────────────────────────
 pydantic~=2.9
@@ -79,3 +81,4 @@ pandas~=2.2
 # CI's `Run Guardian tests` step runs pytest against tests/test_guardian.py.
 # Move to a separate requirements-dev.txt when you split runtime/dev.
 pytest~=8.3
+pytest-asyncio~=0.25
