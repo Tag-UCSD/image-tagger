@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'frontend/**'
+      - "frontend/**"
 
 jobs:
   build-and-deploy:
@@ -15,22 +15,30 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Pull Vercel environment
         working-directory: frontend
-        run: npm ci --include=dev
-
-      - name: Build
-        working-directory: frontend
-        run: npm run build
-
-      - name: Deploy to Vercel (production)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        working-directory: frontend
-        run: npx vercel deploy --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VITE_USE_MOCKS: true
+
+      - name: Build with Vercel
+        working-directory: frontend
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VITE_USE_MOCKS: true
+
+      - name: Deploy to Vercel (production)
+        working-directory: frontend
+        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VITE_USE_MOCKS: true

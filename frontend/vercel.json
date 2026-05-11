@@ -10,6 +10,7 @@
     { "source": "/monitor/:path*",   "destination": "/monitor/index.html" },
     { "source": "/admin",            "destination": "/admin/index.html" },
     { "source": "/admin/:path*",     "destination": "/admin/index.html" },
+    { "source": "/",                 "destination": "/explorer/index.html" },
     { "source": "/:path*",           "destination": "/explorer/index.html" }
   ]
 }
