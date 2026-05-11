@@ -19,26 +19,39 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Pull Vercel environment
+      - name: Install dependencies
         working-directory: frontend
-        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: npm ci --include=dev
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VITE_USE_MOCKS: true
 
-      - name: Build with Vercel
+      - name: Prepare Vercel output
         working-directory: frontend
-        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VITE_USE_MOCKS: true
+        run: |
+          mkdir -p .vercel/output/static
+          cp -r dist/. .vercel/output/static/
+          cat > .vercel/output/config.json << 'EOF'
+          {
+            "version": 3,
+            "routes": [
+              { "handle": "filesystem" },
+              { "src": "^/workbench(/.*)?$", "dest": "/workbench/index.html" },
+              { "src": "^/monitor(/.*)?$",   "dest": "/monitor/index.html" },
+              { "src": "^/admin(/.*)?$",     "dest": "/admin/index.html" },
+              { "src": "^/(.*)$",            "dest": "/explorer/index.html" }
+            ]
+          }
+          EOF
 
-      - name: Deploy to Vercel (production)
-        working-directory: frontend
-        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VITE_USE_MOCKS: true
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: frontend
+          vercel-args: "--prod --prebuilt"
