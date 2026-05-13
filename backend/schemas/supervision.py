@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
 class TaggerPerformance(BaseModel):
-    """Aggregate tagger stats for the Supervisor velocity view."""
+    """Aggregate tagger stats (historical aggregate shape).
+
+    Canonical ``GET /v1/monitor/velocity`` returns :class:`MonitorVelocitySeriesResponse`
+    (/docs/CONTRACT.md).
+    """
 
     user_id: int
     username: str
@@ -19,12 +23,7 @@ class TaggerPerformance(BaseModel):
 
 
 class IRRStat(BaseModel):
-    """Inter-rater reliability summary for a given image/attribute pair.
-
-    This is intentionally simple and numerical so it can drive:
-      * A heatmap in the Supervisor dashboard.
-      * Drill-down into the Tag Inspector.
-    """
+    """Legacy per-image/overlap IRR row (historical heatmaps)."""
 
     image_id: int
     filename: str
@@ -34,6 +33,31 @@ class IRRStat(BaseModel):
     raters: List[str]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class VelocityPoint(BaseModel):
+    """UTC hourly bucket counts for validations (CONTRACT velocity)."""
+
+    timestamp: str
+    count: int
+
+
+class MonitorVelocitySeriesResponse(BaseModel):
+    series: List[VelocityPoint]
+
+
+class MonitorIRRRow(BaseModel):
+    """Aggregated IRR row per registry attribute (/docs/CONTRACT.md § Monitor)."""
+
+    attribute_key: str
+    attribute_name: str
+    irr: float
+    bin: Literal["low", "medium", "high"]
+    n_pairs: int
+
+
+class MonitorIRRTableResponse(BaseModel):
+    rows: List[MonitorIRRRow]
 
 
 class ValidationDetail(BaseModel):

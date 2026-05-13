@@ -1,9 +1,8 @@
 """Smoke-critical Monitor (supervision) integration tests (Task A-11).
 
-``/v1/monitor/*`` is admin-gated. With no overlapping validation data the
-IRR endpoint legitimately returns an empty JSON array — the Phase 1
-runbook empty-state is represented as ``[]`` on the wire (wrapper object
-with a ``rows`` key is the long-term CONTRACT.md target).
+``/v1/monitor/*`` is admin-gated. Monitor endpoints match ``/docs/CONTRACT.md``:
+velocity responds with ``series`` (hour buckets) and IRR responds with ``rows``
+(both nested lists may be empty on a cold database).
 """
 
 from __future__ import annotations
@@ -34,14 +33,14 @@ async def test_monitor_velocity_ok_with_admin_jwt(async_client: AsyncClient) -> 
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert isinstance(data, list)
+    assert isinstance(data.get("series"), list)
 
 
 @pytest.mark.asyncio
 async def test_monitor_irr_returns_empty_list_when_no_overlap(
     async_client: AsyncClient,
 ) -> None:
-    """IRR pairwise table starts empty — Phase 1 smoke empty shape."""
+    """IRR table starts empty when evidence minimums cannot be satisfied."""
     resp = await async_client.get(
         "/v1/monitor/irr",
         params={"window_hours": "72"},
@@ -49,5 +48,5 @@ async def test_monitor_irr_returns_empty_list_when_no_overlap(
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert isinstance(data, list)
-    assert data == []
+    assert isinstance(data.get("rows"), list)
+    assert data["rows"] == []

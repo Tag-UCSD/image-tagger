@@ -85,3 +85,7 @@ async def test_admin_upload_multipart_accepted(
     assert body.get("created_count", 0) >= 1
     assert isinstance(body.get("image_ids"), list)
     assert body["image_ids"]
+    assert body.get("status") == "queued"
+    assert isinstance(body.get("items"), list)
+    assert len(body["items"]) >= 1
+    assert body["items"][0].get("image_id") == body["image_ids"][0]

@@ -1,7 +1,7 @@
 import os
 import logging
 from pydantic import BaseModel
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pathlib import Path
 from fastapi import (
     UploadFile, File, APIRouter, Depends, HTTPException,
@@ -297,11 +297,24 @@ def export_all_images(
         "Content-Disposition": 'attachment; filename="image_tagger_images_export.zip"'
     }
     return StreamingResponse(buf, media_type="application/zip", headers=headers)
+
+
+class AdminUploadItem(BaseModel):
+    """Per-file bookkeeping returned with the queued upload acknowledgement."""
+
+    image_id: int
+    filename: str
+
+
 class AdminUploadResult(BaseModel):
+    """Async upload bookkeeping (Phase 1 smoke / CONTRACT alignment)."""
+
     created_count: int
     image_ids: List[int]
     storage_paths: List[str]
 
+    items: List[AdminUploadItem] = []
+    status: Literal["queued"] = "queued"
     job_id: Optional[int] = None
 
 # v3.4.36: Explicit constants for upload hardening.
@@ -508,6 +521,11 @@ async def upload_images(
         created_count=len(created_ids),
         image_ids=created_ids,
         storage_paths=storage_paths,
+        items=[
+            AdminUploadItem(image_id=iid, filename=oname)
+            for iid, oname in zip(created_ids, original_names)
+        ],
+        status="queued",
         job_id=job_id,
     )
 

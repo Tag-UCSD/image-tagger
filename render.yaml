@@ -1,0 +1,40 @@
+# Render Blueprint — Image Tagger Phase 1 backend (Task A-12a).
+# Declares an optional Postgres (free tier) and a Dockerfile-based web service.
+# Secret values marked sync: false are supplied once during Blueprint setup in the dashboard.
+#
+databases:
+  - name: image-tagger-postgres
+    region: oregon
+    plan: free
+    databaseName: image_tagger
+
+services:
+  - type: web
+    name: image-tagger-backend
+    region: oregon
+    plan: free
+    runtime: docker
+    dockerfilePath: deploy/Dockerfile.backend
+    dockerContext: .
+    healthCheckPath: /health
+    preDeployCommand: >-
+      python -c "from backend.database.core import Base, engine; import backend.models; Base.metadata.create_all(bind=engine)"
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        fromDatabase:
+          name: image-tagger-postgres
+          property: connectionString
+      - key: IMAGE_STORAGE_ROOT
+        value: /data/image_store
+      - key: VLM_HARD_LIMIT_USD
+        value: "10.0"
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
