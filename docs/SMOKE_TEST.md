@@ -127,23 +127,38 @@ curl -sfS -X POST "${BACKEND_URL}/v1/workbench/validate" \
 
 `/v1/monitor/*` is **admin-role** guarded. Prefer **`SMOKE_ADMIN_JWT`** (alternatively another identity whose JWT carries `admin`; **`SMOKE_SUPERVISOR_JWT`** is listed for parity where your policy maps supervisor privileges to monitoring routes).
 
-**Velocity**:
+**Velocity** (`/docs/CONTRACT.md`):
 
 ```bash
 curl -sfS "${BACKEND_URL}/v1/monitor/velocity?window_hours=24" \
-  -H "Authorization: Bearer ${SMOKE_ADMIN_JWT}" | jq -e 'type == "array"'
+  -H "Authorization: Bearer ${SMOKE_ADMIN_JWT}" | jq -e '(.series | type == "array")'
 ```
 
-**IRR (inter-rater / overlap statistics)**  
-
-The API returns a JSON **array** today (possibly empty `[ ]`). The long-term contractual wrapper described in `/docs/CONTRACT.md` may introduce a **`rows`** object for clients; Phase 2 may add IRR seed automation scripts in-repo.
-
-**Important:** meaningful IRR pairs require overlapping human validations seeded in Postgres. Until that dataset exists on your instance, **`[]`** is acceptable for Phase 1. If you believe overlap data exists yet still see `[ ]`, sample again after more validations land.
+**IRR** (`/docs/CONTRACT.md`):
 
 ```bash
 curl -sfS "${BACKEND_URL}/v1/monitor/irr?window_hours=72" \
-  -H "Authorization: Bearer ${SMOKE_ADMIN_JWT}" | jq -e 'type == "array"'
+  -H "Authorization: Bearer ${SMOKE_ADMIN_JWT}" | jq -e '(.rows | type == "array")'
 ```
+
+Returned **`rows`** may be **`[]`** when overlap evidence thresholds (distinct taggers × shared images × comparison pairs documented in `/docs/CONTRACT.md § Monitor IRR`) cannot be satisfied in the chosen window—that is acceptable Phase 1 behavior. Synthetic overlap seeding tooling remains future work unless you ingest enough real validations naturally.
+
+---
+
+## Task A-12b — Human platform verification (GitHub / Render / Supabase)
+
+Task **A-12b** is owned by engineers with Dashboard access—not by CI bots. Prerequisites match **`PLAN_BACKEND_PHASE1.md` § A‑12b** (linked Render service, Postgres, Supabase secrets, short-lived JWTs).
+
+Execute Sections **A–E**, then checklist the bullets below manually (Screenshots/issue comments per org policy):
+
+1. **Render deploy** from committed `render.yaml` + `deploy/Dockerfile.backend` completes green for your tracked Git branch / Blueprint.
+2. **`GET "${BACKEND_URL}/health"`** responds **HTTP 200** with `db == true` and matches Section **A** (`storage` semantics included).
+3. **`POST /v1/admin/upload`** returns **HTTP 202** with `status == "queued"` and ≥1 `image_ids[]` entry (Section **C** assertions).
+4. **`GET /v1/explorer/images/{IMAGE_ID}/detail`** returns **200 within five seconds** of upload, then **`science_run.status` equals `COMPLETED` within sixty seconds** (timers from Section **C**). Planner language references **`SciencePayload.run_status`** (`/docs/CONTRACT.md`); the observable Phase 1 field is **`science_run.status`** (uppercase enums).
+5. **`POST /v1/workbench/validate`** succeeds with **`SMOKE_TAGGER_JWT`** following Section **D**.
+6. **Monitor IRR** payload contains the **`rows` array**, possibly empty **`[]`** if overlap evidence is insufficient—explicitly acceptable for Phase 1 when data has not seeded; track follow-up IRR seed cadence downstream.
+
+Discoveries that require repo edits should ship as incremental commits referencing the Phase 1 deployment checklist.
 
 ---
 

@@ -20,14 +20,18 @@ from pathlib import Path
 
 # Bind test environment before any backend imports so the global
 # ``settings`` singleton picks them up.
+# When collected alongside ``backend/tests/conftest.py`` (A-11), do not clobber
+# ``SUPABASE_JWT_SECRET`` or ``DATABASE_URL`` already prepared there.
 TEST_JWT_SECRET = "test-jwt-secret-for-integration-errors"
 os.environ.setdefault("ENVIRONMENT", "development")
-os.environ["SUPABASE_JWT_SECRET"] = TEST_JWT_SECRET
+os.environ.setdefault("SUPABASE_JWT_SECRET", TEST_JWT_SECRET)
 
+_USING_STANDALONE_ERRORS_DB = "DATABASE_URL" not in os.environ
 _DB_FILE = Path("/tmp/image_tagger_test_errors.sqlite")
-if _DB_FILE.exists():
-    _DB_FILE.unlink()
-os.environ["DATABASE_URL"] = f"sqlite:///{_DB_FILE}"
+if _USING_STANDALONE_ERRORS_DB:
+    if _DB_FILE.exists():
+        _DB_FILE.unlink()
+    os.environ["DATABASE_URL"] = f"sqlite:///{_DB_FILE}"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -167,7 +171,7 @@ def test_explorer_unknown_image_returns_not_found_envelope():
 @pytest.fixture(autouse=True, scope="session")
 def _cleanup_test_db():
     yield
-    if _DB_FILE.exists():
+    if _USING_STANDALONE_ERRORS_DB and _DB_FILE.exists():
         try:
             _DB_FILE.unlink()
         except OSError:

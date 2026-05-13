@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from collections import Counter, defaultdict
+from itertools import combinations
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
@@ -9,16 +11,40 @@ from sqlalchemy.orm import Session
 
 from backend.database.core import get_db
 from backend.services.auth import require_admin
+from backend.models.attribute import Attribute
 from backend.models.users import User
 from backend.models.annotation import Validation
 from backend.models.assets import Image
-from backend.schemas.supervision import TaggerPerformance, IRRStat, ValidationDetail
+from backend.schemas.supervision import (
+    MonitorIRRRow,
+    MonitorIRRTableResponse,
+    MonitorVelocitySeriesResponse,
+    ValidationDetail,
+    VelocityPoint,
+)
 from backend.services.storage import to_static_path
 from backend.science.index_catalog import get_index_metadata
 from backend.api import v1_bn_export
 
 
 router = APIRouter(prefix="/v1/monitor", tags=["Supervisor Dashboard"])
+
+
+def _truncate_hour_utc(ts: datetime) -> datetime:
+    """Floor to an hour bucket; treat naive timestamps as UTC."""
+
+    if ts.tzinfo is not None:
+        ts = ts.astimezone(timezone.utc).replace(tzinfo=None)
+    return ts.replace(minute=0, second=0, microsecond=0)
+
+
+def _irr_quality_bin(score: float) -> Literal["low", "medium", "high"]:
+    if score < 0.41:
+        return "low"
+    if score < 0.68:
+        return "medium"
+    return "high"
+
 
 def _build_restorativeness_heuristic_node(features: List[Dict[str, object]]):
     """Build a simple restorativeness heuristic node for Tag Inspector.
@@ -173,122 +199,122 @@ def _build_restorativeness_heuristic_node(features: List[Dict[str, object]]):
     return node, tag
 
 
-@router.get("/velocity", response_model=List[TaggerPerformance])
+@router.get("/velocity", response_model=MonitorVelocitySeriesResponse)
 def get_velocity(
     window_hours: int = Query(default=24, ge=1, le=24 * 30),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
-) -> List[TaggerPerformance]:
-    """Aggregate tagger velocity over a recent time window.
+) -> MonitorVelocitySeriesResponse:
+    """Histogram of validation submissions per UTC hour bucket.
 
-    Window bounds are enforced via FastAPI's ``Query`` constraints
-    (Task A-4) — a non-positive or unbounded value is rejected with a
-    ``VALIDATION_ERROR`` response instead of being silently clamped.
+    Mirrors ``VelocityPoint[]`` nesting from ``/docs/CONTRACT.md`` as
+    ``{ "series": [...] }`` on the wire.
     """
     cutoff = datetime.utcnow() - timedelta(hours=window_hours)
 
-    rows = (
-        db.query(
-            Validation.user_id.label("user_id"),
-            func.coalesce(User.username, "unknown").label("username"),
-            func.count(func.distinct(Validation.image_id)).label("images_validated"),
-            func.coalesce(func.avg(Validation.duration_ms), 0).label("avg_duration_ms"),
-            func.count(Validation.id).label("validations_count"),
+    timestamps = (
+        db.query(Validation.created_at)
+        .filter(
+            Validation.created_at.isnot(None),
+            Validation.created_at >= cutoff,
         )
-        .outerjoin(User, User.id == Validation.user_id)
-        .filter(Validation.created_at >= cutoff)
-        .group_by(Validation.user_id, User.username)
         .all()
     )
 
-    results: List[TaggerPerformance] = []
-    for row in rows:
-        avg_duration_ms = int(row.avg_duration_ms or 0)
-        status = "active" if row.validations_count > 0 else "inactive"
-        results.append(
-            TaggerPerformance(
-                user_id=row.user_id or 0,
-                username=row.username or "unknown",
-                images_validated=row.images_validated,
-                avg_duration_ms=avg_duration_ms,
-                status=status,
-            )
+    hour_counts: Counter[datetime] = Counter()
+    for (ts,) in timestamps:
+        hour_counts[_truncate_hour_utc(ts)] += 1
+
+    ordered = sorted(hour_counts.items(), key=lambda kv: kv[0])
+    series = [
+        VelocityPoint(
+            timestamp=bucket.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            count=count,
         )
+        for bucket, count in ordered
+    ]
+    return MonitorVelocitySeriesResponse(series=series)
 
-    return results
 
-
-@router.get("/irr", response_model=List[IRRStat])
+@router.get("/irr", response_model=MonitorIRRTableResponse)
 def get_irr(
     window_hours: int = Query(default=72, ge=1, le=24 * 30),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
-) -> List[IRRStat]:
-    """Compute a simple IRR metric from overlapping validations.
+) -> MonitorIRRTableResponse:
+    """IRR rows aggregated per attribute key (/docs/CONTRACT.md § Monitor IRR).
 
-    Per-pair agreement is the average exact-value match ratio between
-    raters; ``window_hours`` bounds are enforced at the schema layer
-    (Task A-4).
+    Rows emit only after both minimum evidence thresholds documented in CONTRACT
+    are satisfied inside the sliding window:
+
+    - at least 10 images where two-or-more distinct human raters submitted a value for
+      the same attribute key, and
+
+    - at least 10 distinct cross-rater comparison pairs aggregated across those images.
     """
     cutoff = datetime.utcnow() - timedelta(hours=window_hours)
+    MIN_OVERLAP_IMAGES = 10
+    MIN_PAIR_TOTAL = 10
 
-    rows = (
-        db.query(
-            Validation.image_id,
-            Validation.attribute_key,
-            Validation.value,
-            Validation.user_id,
-            func.coalesce(User.username, "unknown").label("username"),
-            Image.filename,
+    validations = (
+        db.query(Validation)
+        .filter(
+            Validation.created_at.isnot(None),
+            Validation.created_at >= cutoff,
+            Validation.user_id.isnot(None),
         )
-        .join(Image, Image.id == Validation.image_id)
-        .outerjoin(User, User.id == Validation.user_id)
-        .filter(Validation.created_at >= cutoff)
         .all()
     )
 
-    from collections import defaultdict
+    overlap_cells: defaultdict[str, dict[int, list[Validation]]] = defaultdict(dict)
+    group_lists: defaultdict[tuple[str, int], list[Validation]] = defaultdict(list)
+    for record in validations:
+        group_lists[(record.attribute_key, record.image_id)].append(record)
 
-    grouped = defaultdict(list)
-    for row in rows:
-        key = (row.image_id, row.filename, row.attribute_key)
-        grouped[key].append((row.value, row.username))
+    for (attr_key, image_id), bucket in group_lists.items():
+        if len({v.user_id for v in bucket if v.user_id is not None}) >= 2:
+            overlap_cells[attr_key][image_id] = bucket
 
-    results: List[IRRStat] = []
-    for (image_id, filename, attribute_key), values in grouped.items():
-        n = len(values)
-        if n < 2:
+    name_map = {row.key: row.name for row in db.query(Attribute).all()}
+
+    rows_out: list[MonitorIRRRow] = []
+    for attr_key in sorted(overlap_cells.keys()):
+        img_map = overlap_cells[attr_key]
+        if len(img_map) < MIN_OVERLAP_IMAGES:
             continue
 
-        total_pairs = 0
+        pairwise_total = 0
         agree_pairs = 0
-        for i in range(n):
-            vi, _ui = values[i]
-            for j in range(i + 1, n):
-                vj, _uj = values[j]
-                total_pairs += 1
-                if vi == vj:
+        participant_users: set[int] = set()
+
+        for _img_id, lst in img_map.items():
+            for idx_i, idx_j in combinations(range(len(lst)), 2):
+                vi, vj = lst[idx_i], lst[idx_j]
+                if vi.user_id is None or vj.user_id is None:
+                    continue
+                if vi.user_id == vj.user_id:
+                    continue
+                pairwise_total += 1
+                participant_users.update([vi.user_id, vj.user_id])
+                if float(vi.value) == float(vj.value):
                     agree_pairs += 1
 
-        if total_pairs == 0:
+        if pairwise_total < MIN_PAIR_TOTAL or len(participant_users) < 2:
             continue
 
-        agreement_score = agree_pairs / total_pairs
-        conflict_count = total_pairs - agree_pairs
-        raters = sorted({u for _v, u in values})
-
-        results.append(
-            IRRStat(
-                image_id=image_id,
-                filename=filename,
-                attribute_key=attribute_key,
-                agreement_score=agreement_score,
-                conflict_count=conflict_count,
-                raters=raters,
+        irr_score = agree_pairs / pairwise_total
+        quality_bin = _irr_quality_bin(irr_score)
+        rows_out.append(
+            MonitorIRRRow(
+                attribute_key=attr_key,
+                attribute_name=name_map.get(attr_key, attr_key),
+                irr=round(irr_score, 4),
+                bin=quality_bin,
+                n_pairs=pairwise_total,
             )
         )
 
-    return results
+    return MonitorIRRTableResponse(rows=rows_out)
 
 
 @router.get("/image/{image_id}/validations", response_model=List[ValidationDetail])
