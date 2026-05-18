@@ -19,8 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend /app/backend
 
-RUN groupadd --system --gid 10001 appgroup \
-    && useradd --system --uid 10001 --ingroup appgroup --home /home/appuser --shell /bin/sh appuser \
+RUN groupadd --gid 10001 appgroup \
+    && useradd --uid 10001 --gid appgroup --home-dir /home/appuser --create-home --shell /bin/sh appuser \
     && mkdir -p /data/image_store \
     && chown -R appuser:appgroup /app /data/image_store
 
