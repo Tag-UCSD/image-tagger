@@ -17,8 +17,8 @@ services:
     dockerfilePath: deploy/Dockerfile.backend
     dockerContext: .
     healthCheckPath: /health
-    preDeployCommand: >-
-      python -c "from backend.database.core import Base, engine; import backend.models; Base.metadata.create_all(bind=engine)"
+    # Schema bootstrap runs in the app's lifespan startup (backend/main.py)
+    # so the service does not depend on Render's paid pre-deploy feature.
     envVars:
       - key: ENVIRONMENT
         value: production
