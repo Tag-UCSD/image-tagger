@@ -29,3 +29,7 @@ __all__ = list(dict.fromkeys(__all__ + ['UploadJob', 'UploadJobItem']))
 from backend.models.science_runs import ScienceRun, ScienceArtifact, ScienceTag
 
 __all__ = list(dict.fromkeys(__all__ + ['ScienceRun', 'ScienceArtifact', 'ScienceTag']))
+
+from backend.models.image_sets import ImageSet, ImageSetItem
+
+__all__ = list(dict.fromkeys(__all__ + ['ImageSet', 'ImageSetItem']))

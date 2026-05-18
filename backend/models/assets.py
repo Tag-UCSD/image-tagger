@@ -26,6 +26,7 @@ class Image(Base, TimestampMixin):
     
     regions = relationship("Region", back_populates="image", cascade="all, delete-orphan")
     validations = relationship("Validation", back_populates="image")
+    image_set_items = relationship("ImageSetItem", back_populates="image")
 
 class Region(Base, TimestampMixin):
     """
