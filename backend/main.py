@@ -4,6 +4,8 @@ from typing import Callable
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from backend.database.core import Base, engine
+import backend.models  # noqa: F401  # registers ORM mappers before create_all
 from backend.error_handlers import register_exception_handlers
 from backend.logging_config import configure_logging, get_logger
 from backend.middleware.request_context import RequestContextMiddleware
@@ -33,6 +35,10 @@ async def lifespan(_app: FastAPI):
     # Fail fast when a production deployment is missing required secrets.
     # No-op in development/staging; see backend/settings.py::Settings.
     settings.assert_production_ready()
+    # Idempotent schema bootstrap. Replaces the Render pre-deploy command,
+    # which is unavailable on the free plan. create_all is a no-op when
+    # tables already exist, so it is safe on every boot.
+    Base.metadata.create_all(bind=engine)
     logger.info(
         "backend.startup",
         environment=settings.environment,
