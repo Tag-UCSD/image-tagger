@@ -1,0 +1,579 @@
+# Workplan 2: Local Image Tagger Feature Updates
+
+## Purpose
+
+This workplan rewrites the main objectives from `/Users/tds/Documents/GitHub/tagger update assignment` as feature work for the local `/Users/tds/Documents/GitHub/image-tagger` product. The upstream assignment framed the work as deliverables into a Knowledge Atlas branch: build a 500-image collection, implement six latent-tag detectors, batch annotate the collection, and ship a standalone HTML viewer. For this repository, those objectives should become local product capabilities in the existing FastAPI + React Image Tagger app.
+
+The current local repo already has the product surfaces the assignment treated as missing reference infrastructure: Explorer, Workbench, Monitor, and Admin. The meaningful update is not to create a separate `ka_image_viewer.html` or a Knowledge Atlas task folder. The meaningful update is to make image collections, latent environmental variables, and effect-oriented browsing first-class local Image Tagger features.
+
+## Assessment Of Meaningful Updates
+
+The assignment material points to three durable product needs:
+
+1. New GUIs for browsing and inspecting images by latent tags and human effects.
+2. Latent variables that score social-spatial qualities of interior environments.
+3. Image sets that preserve collection identity, provenance, and batch-run status.
+
+The local `image-tagger` repo is already close to this shape:
+
+- `frontend/apps/explorer` provides public search and an image detail modal.
+- `frontend/apps/workbench` provides a human validation workflow.
+- `frontend/apps/monitor` provides supervisor status and reliability views.
+- `frontend/apps/admin` provides upload, budget, and operational controls.
+- `backend/science/pipeline.py` already runs deterministic analyzers and canonical science runs.
+- `backend/services/science_runs.py` already tracks run lifecycle and canonical science versioning.
+- `backend/api/v1_discovery.py` already exposes Explorer search and image detail.
+
+The best local update is therefore a second product pass that adds:
+
+- named image-set import and filtering;
+- six local latent social-spatial observations with evidence;
+- GUI affordances for browsing latent observations and effect mappings;
+- batch-run and monitoring controls that reuse existing science-run patterns.
+
+Do not implement the assignment as a separate upstream-style sandbox. Do not add a standalone HTML viewer unless explicitly requested later. This repo should keep one local product boundary.
+
+## Product End State
+
+After Workplan 2 is complete, a user can:
+
+- import a named image set with provenance into the local database;
+- run the six selected latent detectors across that image set;
+- browse the set in Explorer by image set, room type, latent tag, effect domain, and score threshold;
+- open an image detail modal showing provenance, latent scores, detector evidence, linked effects, and science-run state;
+- validate or correct latent scores in Workbench;
+- monitor per-set run completion, detector errors, and suspicious score distributions in Monitor.
+
+## Selected Latent Variables
+
+Implement exactly six first-pass latent variables. This preserves the assignment's "two from each family" coverage while keeping the product update bounded.
+
+### Furniture Geometry
+
+- `social.sociopetal_seating`
+  - Measures whether seating is arranged to promote face-to-face interaction.
+  - First-pass evidence should include available seating/object counts, estimated clusters, visual openness proxies, and whether the score came from proxy features or segmentation.
+
+- `social.shared_attention_anchor`
+  - Measures whether seating or spatial organization appears oriented around a shared focal point such as a screen, fireplace, window, table, or presentation surface.
+  - First-pass evidence should include focal-object cues, centrality/openness proxies, candidate anchor labels when available, and detector source.
+
+### Sightlines And Isovists
+
+- `social.interactional_visibility`
+  - Measures whether occupants can plausibly see one another across the space.
+  - First-pass evidence should include openness score, edge density, partition/occlusion proxy, depth availability, and brightness variance.
+
+- `spatial.prospect`
+  - Measures whether the image suggests long views, depth, or outward visibility.
+  - First-pass evidence should include depth spread when available, horizon/large-opening cues when available, openness score, and image geometry proxies.
+
+### Circulation And Apertures
+
+- `social.chance_encounter_potential`
+  - Measures whether circulation geometry appears to create intersections or shared paths where people may meet incidentally.
+  - First-pass evidence should include floor/edge skeleton proxies when available, path complexity, visible passage count, and confidence source.
+
+- `social.disengagement_ease`
+  - Measures whether a person could leave a social situation without disruption.
+  - First-pass evidence should include exit/path cues, openness, crowding or enclosure proxy, and whether circulation evidence is real or proxy-derived.
+
+All six detector outputs must use a local ordinal `0..4` value scale:
+
+- `0`: not present or no usable evidence
+- `1`: weak indication
+- `2`: moderate indication
+- `3`: strong indication
+- `4`: very strong indication
+
+Confidence is separate from value and should usually be modest for proxy-only detectors. Use `0.2..0.4` for proxy-only outputs and higher values only when segmentation, depth, or other stronger intermediate representations directly support the observation.
+
+## Data Model And Contracts
+
+### Image Sets
+
+Add persistent image-set support rather than storing collection identity only in `Image.meta_data`.
+
+Recommended tables:
+
+- `image_sets`
+  - `id`
+  - `slug`
+  - `name`
+  - `description`
+  - `source`
+  - `provenance`
+  - `created_at`
+  - `updated_at`
+
+- `image_set_items`
+  - `id`
+  - `image_set_id`
+  - `image_id`
+  - `position`
+  - `room_type`
+  - `source_url`
+  - `photographer`
+  - `license`
+  - `license_url`
+  - `created_at`
+
+Use a unique constraint on `(image_set_id, image_id)` and a unique `image_sets.slug`.
+
+### Latent Observations
+
+Add persistent latent observations instead of forcing every latent output into legacy validation rows only.
+
+Recommended table:
+
+- `latent_observations`
+  - `id`
+  - `image_id`
+  - `image_set_id`
+  - `science_run_id`
+  - `tag_id`
+  - `value`
+  - `value_type`
+  - `confidence`
+  - `evidence`
+  - `detector_version`
+  - `created_at`
+  - `updated_at`
+
+Required constraints:
+
+- `tag_id` is non-empty.
+- `value_type` is `ordinal` for the six first-pass variables.
+- `value` is between `0` and `4`.
+- `confidence` is between `0` and `1`.
+- `evidence` is JSON and defaults to `{}`.
+
+The API should return latent observations as:
+
+```json
+{
+  "tag_id": "social.interactional_visibility",
+  "value": 3.2,
+  "value_type": "ordinal",
+  "confidence": 0.32,
+  "evidence": {
+    "openness_score": 0.81,
+    "partition_proxy": 0.18,
+    "depth_source": "proxy"
+  },
+  "detector_version": "latent-social-v1"
+}
+```
+
+### Effect Mapping
+
+Add a local mapping file at `backend/data/effect_tag_mapping.json`.
+
+Use seven effect domains:
+
+- `cognitive`
+- `affective`
+- `behavioral`
+- `social`
+- `physiological`
+- `neural`
+- `health`
+
+For v1, manual mapping is acceptable and preferred. Include a short `mechanism` string for each link so Explorer can explain matches.
+
+Initial mapping:
+
+```json
+{
+  "version": "1.0",
+  "domains": {
+    "social": [
+      {
+        "tag_id": "social.sociopetal_seating",
+        "mechanism": "face-to-face seating supports interaction"
+      },
+      {
+        "tag_id": "social.interactional_visibility",
+        "mechanism": "mutual visibility supports awareness"
+      },
+      {
+        "tag_id": "social.chance_encounter_potential",
+        "mechanism": "intersecting circulation increases incidental contact"
+      },
+      {
+        "tag_id": "social.shared_attention_anchor",
+        "mechanism": "shared focal points coordinate group attention"
+      }
+    ],
+    "cognitive": [
+      {
+        "tag_id": "spatial.prospect",
+        "mechanism": "long views support orientation and spatial understanding"
+      },
+      {
+        "tag_id": "social.shared_attention_anchor",
+        "mechanism": "focal anchors reduce ambiguity about activity focus"
+      },
+      {
+        "tag_id": "social.interactional_visibility",
+        "mechanism": "visibility improves prediction of others' actions"
+      }
+    ],
+    "affective": [
+      {
+        "tag_id": "social.sociopetal_seating",
+        "mechanism": "inviting group arrangements can increase comfort"
+      },
+      {
+        "tag_id": "spatial.prospect",
+        "mechanism": "open views can reduce perceived confinement"
+      },
+      {
+        "tag_id": "social.disengagement_ease",
+        "mechanism": "clear exits can reduce social pressure"
+      }
+    ],
+    "behavioral": [
+      {
+        "tag_id": "social.chance_encounter_potential",
+        "mechanism": "circulation intersections shape encounter frequency"
+      },
+      {
+        "tag_id": "social.disengagement_ease",
+        "mechanism": "available exits support graceful withdrawal"
+      },
+      {
+        "tag_id": "social.shared_attention_anchor",
+        "mechanism": "focal anchors organize group behavior"
+      }
+    ],
+    "physiological": [],
+    "neural": [],
+    "health": []
+  }
+}
+```
+
+## Backend Implementation
+
+### Models And Migrations
+
+Add SQLAlchemy models for image sets, image-set items, and latent observations. Place them near the existing asset/science model boundaries, and import them in `backend/models/__init__.py` if needed by metadata creation.
+
+Add migrations or a local migration helper consistent with the repo's existing migration style. Existing scripts include `backend/scripts/migrate_3_4_74_add_science_tables.py`; follow that style unless the repo has since standardized on another migration tool.
+
+### Import Service
+
+Add a service that imports collection manifests into image sets.
+
+Accepted manifest shape:
+
+```json
+{
+  "name": "COGS 160 Interior Collection",
+  "slug": "cogs160-interiors",
+  "description": "Interior architecture image collection",
+  "source": "local_manifest",
+  "images": [
+    {
+      "filename": "img_001.jpg",
+      "url": "https://example.com/img_001.jpg",
+      "path": null,
+      "room_type": "living_room",
+      "source_url": "https://example.com/page",
+      "photographer": "Unknown",
+      "license": "Unknown",
+      "license_url": null,
+      "tags": ["living room", "seating"]
+    }
+  ]
+}
+```
+
+Rules:
+
+- Accept either `url`, `path`, or `storage_path` for each image.
+- Reuse an existing `Image` row when filename and storage path already match.
+- Create `ImageSetItem` rows for every valid image.
+- Preserve room type and provenance in `ImageSetItem`; optionally mirror room type into `Image.meta_data` for current Explorer compatibility.
+- Return counts for `created_images`, `reused_images`, `created_items`, `skipped_items`, and `errors`.
+
+### Latent Detector Service
+
+Create a detector module that exposes one stable interface:
+
+```python
+@dataclass
+class LatentObservationResult:
+    tag_id: str
+    value: float
+    value_type: str
+    confidence: float
+    evidence: dict
+    detector_version: str
+```
+
+Recommended callable:
+
+```python
+def run_latent_social_detectors(frame: AnalysisFrame) -> list[LatentObservationResult]:
+    ...
+```
+
+Each detector should be short and auditable. Avoid training a neural network for this pass. Use existing frame-level data:
+
+- `frame.gray_image`
+- `frame.edges`
+- `frame.lab_image`
+- `frame.depth_map` when available
+- `frame.attributes` produced by earlier analyzers
+- `frame.metadata` from segmentation/materials/room analyzers when available
+
+The first implementation may use proxy features such as:
+
+- edge density;
+- central openness;
+- brightness variance;
+- depth spread;
+- visible floor/path proxy;
+- object or material hints from metadata;
+- room type hints.
+
+Proxy outputs must include evidence fields that disclose the source, for example `"depth_source": "proxy"` or `"segmentation_source": "unavailable"`.
+
+### Pipeline Integration
+
+Add latent detector support to canonical science runs.
+
+Implementation outline:
+
+1. Add a config flag such as `enable_latent_social=True` to `SciencePipelineConfig`.
+2. Include the flag in `to_dict()` and `build_canonical_config()`.
+3. Run latent detectors after core spatial/material/segmentation analyzers have populated the frame.
+4. Persist observations into `latent_observations`.
+5. Promote high-value latent observations into canonical tags through `derive_all_tags()` or a new `derive_latent_observation_tags()` helper.
+
+Promotion rule:
+
+- Add canonical tags for observations with `value >= 2.5`.
+- Use labels derived from tag IDs, e.g. `Interactional Visibility`.
+- Store namespace as `social` or `spatial`.
+- Use confidence from the observation.
+
+### API Endpoints
+
+Add or extend these endpoints.
+
+Explorer:
+
+- `GET /v1/explorer/image-sets`
+  - Returns `{ items: ImageSetSummary[] }`.
+
+- `GET /v1/explorer/search`
+  - Preserve existing query parameters.
+  - Add optional filters:
+    - `image_set`
+    - `latent_tag`
+    - `effect_domain`
+    - `min_value`
+  - Keep Explorer anonymous.
+
+- `GET /v1/explorer/images/{image_id}`
+  - Include:
+    - image-set memberships;
+    - provenance;
+    - latent observations;
+    - linked effect domains and mechanisms;
+    - existing science payload and canonical tags.
+
+Admin:
+
+- `POST /v1/admin/image-sets/import`
+  - Protected by admin auth.
+  - Accepts manifest JSON.
+  - Returns import summary and image-set ID.
+
+- `POST /v1/admin/image-sets/{image_set_id}/latent-runs`
+  - Protected by admin auth.
+  - Queues or runs latent processing for images in the set.
+  - Returns queued count, already completed count, and failed count.
+
+Monitor:
+
+- `GET /v1/monitor/image-sets/{image_set_id}/latent-status`
+  - Protected by supervisor/admin auth.
+  - Returns per-detector completion counts, failure counts, means, min/max, and suspicious distribution flags.
+
+Workbench:
+
+- Extend `GET /v1/workbench/next` or add a focused route for latent validation assignments.
+  - The assignment should include image, latent observation, tag definition/label, value, confidence, and evidence.
+- Extend validation submit to allow corrected latent values.
+
+## Frontend Implementation
+
+### Shared API Client
+
+Extend `frontend/shared/src/api-client.js` with:
+
+- `explorer.listImageSets()`
+- `explorer.search({ image_set, latent_tag, effect_domain, min_value, ... })`
+- `admin.importImageSet(manifest)`
+- `admin.runLatentDetectors(imageSetId)`
+- `monitor.getLatentStatus(imageSetId)`
+- `workbench.getNextLatent()` if a separate latent route is chosen.
+
+Update mocks under `frontend/shared/src/mocks/` so every new GUI state is testable without the backend.
+
+### Explorer GUI
+
+Update `frontend/apps/explorer`:
+
+- Add an image-set selector above or alongside current search controls.
+- Add latent-tag filter controls for the six selected tags.
+- Add effect-domain filters for the seven domains from `effect_tag_mapping.json`.
+- Add a numeric score threshold control, defaulting to `2.5`.
+- Update grid cards to show:
+  - image-set label when selected;
+  - top latent observation and value bar;
+  - room type/provenance cue when available.
+- Update `ImageDetailModal.jsx` with a new "Latents" or "Environment" tab:
+  - score bars on the `0..4` scale;
+  - confidence badge;
+  - evidence table showing every evidence key/value;
+  - linked effect domains and mechanism strings;
+  - provenance section with source URL, photographer, license, and image-set name.
+
+The modal must remain keyboard accessible and close with Escape through the shared `Modal` behavior.
+
+### Admin GUI
+
+Update `frontend/apps/admin`:
+
+- Add an image-set import panel.
+- Support paste/upload of a JSON manifest, with client-side validation before submit.
+- Show import summary:
+  - created images;
+  - reused images;
+  - created items;
+  - skipped items;
+  - errors.
+- Add a "Run latent detectors" action for an imported set.
+- Show queued/already-complete/failed status after triggering a run.
+
+Keep upload policy behavior unchanged.
+
+### Workbench GUI
+
+Update `frontend/apps/workbench`:
+
+- Add a latent validation mode that shows:
+  - image;
+  - latent tag label;
+  - current detector value and confidence;
+  - detector evidence;
+  - a correction control for `0..4`;
+  - optional notes if the existing validation model supports notes, otherwise omit notes.
+- Preserve the current assigned-attribute workflow.
+- Do not hardcode UI for only one tag; render from assignment metadata.
+
+### Monitor GUI
+
+Update `frontend/apps/monitor`:
+
+- Add an image-set selector.
+- Add latent run status cards:
+  - total images in set;
+  - images with all six observations;
+  - detector failures;
+  - mean score per detector;
+  - percentage above threshold per detector.
+- Add warnings for suspicious distributions:
+  - all scores are identical;
+  - more than 80 percent of images are above `2.5` for a detector;
+  - more than 80 percent of images are below `0.5` for a detector;
+  - confidence mean below `0.2`.
+
+## Testing Requirements
+
+### Backend Tests
+
+Add tests for:
+
+- image-set import creates the set, items, and provenance;
+- duplicate imports reuse images and do not duplicate set items;
+- invalid manifests return canonical validation errors;
+- each latent detector returns a value in `0..4`, confidence in `0..1`, and non-empty evidence;
+- canonical science runs persist six latent observations per image when latent social detectors are enabled;
+- Explorer search filters by image set;
+- Explorer search filters by latent tag and threshold;
+- Explorer search filters by effect domain through `effect_tag_mapping.json`;
+- image detail returns latent observations and linked effects;
+- Monitor latent status computes counts and distribution warnings.
+
+### Frontend Tests
+
+Add or extend tests for:
+
+- Explorer renders image-set, latent-tag, effect-domain, and threshold controls;
+- Explorer search sends the selected filters to the shared API client;
+- image detail modal renders latent scores, evidence rows, provenance, and effect mechanisms;
+- Admin validates and submits an image-set manifest;
+- Admin latent-run action shows queued/already-complete/failed counts;
+- Workbench latent mode renders detector evidence and submits corrected values;
+- Monitor renders latent status and suspicious distribution warnings.
+
+### Smoke Test
+
+Create a small fixture manifest with 10 images or mocked image URLs.
+
+Smoke flow:
+
+1. Import the fixture manifest in Admin.
+2. Run latent detectors for the imported image set.
+3. Open Explorer and select the image set.
+4. Filter by `social.interactional_visibility` with `min_value=2.5`.
+5. Filter by the `social` effect domain.
+6. Open an image detail modal.
+7. Confirm provenance, six latent observations, evidence tables, and linked effect explanations render.
+8. Open Monitor and confirm latent status counts match the fixture.
+
+## Implementation Order
+
+1. Add backend models, migration/helper, and tests for image sets.
+2. Add image-set import service and Admin import API.
+3. Add latent observation schema/model and persistence service.
+4. Implement six latent detectors with unit tests.
+5. Integrate latent detectors into canonical science runs.
+6. Add effect mapping loader and linked-effect response shaping.
+7. Extend Explorer APIs and tests.
+8. Extend Admin GUI and shared API mocks.
+9. Extend Explorer GUI and modal.
+10. Extend Workbench latent validation.
+11. Extend Monitor latent status.
+12. Run backend tests, frontend build/tests, and the 10-image smoke flow.
+
+## Constraints And Defaults
+
+- Keep this work local to `image-tagger`; do not write to Knowledge Atlas or upstream contractor repos.
+- Treat `_archive/` as reference only.
+- Do not introduce a new standalone HTML viewer.
+- Do not add heavyweight ML dependencies for v1 latent detectors.
+- Keep proxy detectors transparent and evidence-rich.
+- Use existing auth boundaries: Explorer public, Admin/Workbench/Monitor protected.
+- Update `docs/CONTRACT.md` when endpoint shapes or shared response types change.
+- If implementation changes canonical science config, bump `ACTIVE_SCIENCE_VERSION` so old runs are not silently treated as current.
+
+## Acceptance Criteria
+
+Workplan 2 is complete when:
+
+- a named image set can be imported locally with provenance;
+- the six latent variables are computed and persisted for all images in a set;
+- Explorer can browse and filter by image set, latent tag, score threshold, and effect domain;
+- Explorer detail shows latent values, confidence, evidence, provenance, and linked effects;
+- Admin can import sets and trigger latent runs;
+- Workbench can validate or correct latent observations;
+- Monitor can show latent completion and score distributions for a set;
+- tests cover the new backend contracts and frontend GUI states;
+- existing v1 Explorer, Admin, Workbench, Monitor, upload, and science-run behavior remains intact.
