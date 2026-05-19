@@ -79,12 +79,15 @@ app = FastAPI(
 
 # CORS: allow the configured browser origins to call the API. Added before
 # other middleware so OPTIONS preflights are handled by CORSMiddleware
-# rather than the router (which would return 405).
+# rather than the router (which would return 405). cors_allowed_origin_regex
+# is optional and matches dynamic preview URLs (e.g. Vercel preview deploys).
 _cors_origins = settings.cors_origins_list
-if _cors_origins:
+_cors_regex = settings.cors_allowed_origin_regex
+if _cors_origins or _cors_regex:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_origins,
+        allow_origin_regex=_cors_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
