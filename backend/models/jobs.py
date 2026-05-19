@@ -20,9 +20,11 @@ class UploadJob(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    # Optional link back to the admin user who initiated the job.
-    created_by_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("users.id"), nullable=True
+    # Identity of the admin user who initiated the job, stored as the
+    # Supabase JWT 'sub' claim (string). Not a foreign key — local 'users'
+    # table is vestigial and Supabase owns identity externally.
+    created_by_id: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True
     )
 
     status: Mapped[str] = mapped_column(String(32), default="PENDING", index=True)
