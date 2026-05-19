@@ -35,11 +35,10 @@ jobs:
           VITE_DEMO_TAGGER_JWT: ${{ secrets.VITE_DEMO_TAGGER_JWT }}
           VITE_DEMO_SUPERVISOR_JWT: ${{ secrets.VITE_DEMO_SUPERVISOR_JWT }}
 
-      - name: Prepare Vercel output
-        working-directory: frontend
+      - name: Prepare Vercel output at repo root
         run: |
           mkdir -p .vercel/output/static
-          cp -r dist/. .vercel/output/static/
+          cp -r frontend/dist/. .vercel/output/static/
           cat > .vercel/output/config.json << 'EOF'
           {
             "version": 3,
@@ -54,7 +53,6 @@ jobs:
           EOF
 
       - name: Deploy to Vercel
-        working-directory: frontend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
