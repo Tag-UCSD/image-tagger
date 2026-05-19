@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     database_url: Optional[str] = Field(default=None)
     supabase_jwt_secret: Optional[str] = Field(default=None)
     cors_allowed_origins: Optional[str] = Field(default=None)
+    # Optional regex matched against the Origin header. Useful for allowing
+    # Vercel preview URLs (e.g. https://image-tagger-<hash>-<team>.vercel.app)
+    # without enumerating each one in cors_allowed_origins.
+    cors_allowed_origin_regex: Optional[str] = Field(default=None)
     vlm_hard_limit_usd: Optional[float] = Field(default=None)
 
     image_storage_root: str = Field(default="data_store")
