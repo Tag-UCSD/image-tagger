@@ -25,6 +25,20 @@ jobs:
         working-directory: frontend
         run: npm ci --include=dev
 
+      - name: Diagnose build env (lengths only; values are masked)
+        env:
+          VITE_USE_MOCKS: "false"
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_DEMO_ADMIN_JWT: ${{ secrets.VITE_DEMO_ADMIN_JWT }}
+          VITE_DEMO_TAGGER_JWT: ${{ secrets.VITE_DEMO_TAGGER_JWT }}
+          VITE_DEMO_SUPERVISOR_JWT: ${{ secrets.VITE_DEMO_SUPERVISOR_JWT }}
+        run: |
+          echo "VITE_USE_MOCKS          len=${#VITE_USE_MOCKS}"
+          echo "VITE_API_BASE_URL       len=${#VITE_API_BASE_URL}"
+          echo "VITE_DEMO_ADMIN_JWT     len=${#VITE_DEMO_ADMIN_JWT}"
+          echo "VITE_DEMO_TAGGER_JWT    len=${#VITE_DEMO_TAGGER_JWT}"
+          echo "VITE_DEMO_SUPERVISOR_JWT len=${#VITE_DEMO_SUPERVISOR_JWT}"
+
       - name: Build
         working-directory: frontend
         run: npm run build
@@ -34,6 +48,14 @@ jobs:
           VITE_DEMO_ADMIN_JWT: ${{ secrets.VITE_DEMO_ADMIN_JWT }}
           VITE_DEMO_TAGGER_JWT: ${{ secrets.VITE_DEMO_TAGGER_JWT }}
           VITE_DEMO_SUPERVISOR_JWT: ${{ secrets.VITE_DEMO_SUPERVISOR_JWT }}
+
+      - name: Diagnose built bundle (was env baked in?)
+        run: |
+          BUNDLE=$(ls frontend/dist/explorer/assets/index-*.js | head -1)
+          echo "Bundle: $BUNDLE  size=$(wc -c < "$BUNDLE")"
+          echo "onrender.com occurrences:  $(grep -c 'onrender\.com' "$BUNDLE" || true)"
+          echo "eyJhbGc JWT-shaped strings: $(grep -oE 'eyJhbGc[A-Za-z0-9._-]{30,}' "$BUNDLE" | wc -l)"
+          echo "Empty-VITE-replacement marker (api base resolved to ''): $(grep -oE '\"\"\.replace\(/\\/\\\$/' "$BUNDLE" | wc -l)"
 
       - name: Prepare Vercel output at repo root
         run: |
