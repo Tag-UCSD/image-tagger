@@ -23,9 +23,11 @@ from backend.settings import settings
 logger = logging.getLogger(__name__)
 from backend.models.config import ToolConfig
 from backend.schemas.admin import ToolConfigRead, ToolConfigUpdate, BudgetStatus
+from backend.schemas.image_sets import ImageSetImportRequest, ImageSetImportResponse
 from backend.schemas.discovery import ExportRequest
 from backend.schemas.training import TrainingExample
 from backend.services.training_export import TrainingExporter
+from backend.services.image_sets import import_image_set
 
 
 router = APIRouter(prefix="/v1/admin", tags=["Admin Cockpit"])
@@ -231,6 +233,23 @@ async def kill_switch(
         hard_limit=hard_limit,
         is_kill_switched=is_kill_switched,
     )
+@router.post(
+    "/image-sets/import",
+    response_model=ImageSetImportResponse,
+)
+async def import_image_set_manifest(
+    payload: ImageSetImportRequest,
+    db: Session = Depends(get_db),
+    _user=Depends(require_admin),
+) -> ImageSetImportResponse:
+    """Import a collection manifest into image and image-set tables.
+
+    Authorization is enforced solely via the bearer JWT (``require_admin``);
+    client-supplied identity headers are not trusted.
+    """
+    return import_image_set(db, payload)
+
+
 @router.post("/training/export", response_model=list[TrainingExample])
 async def admin_export_training(
     request: ExportRequest,
