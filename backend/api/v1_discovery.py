@@ -39,6 +39,7 @@ from backend.schemas.discovery import (
 )
 from backend.models.attribute import Attribute
 from backend.models.assets import Image
+from backend.services.storage import to_static_path
 from backend.science.context.affordance import (
     AFFORDANCE_IDS,
     AFFORDANCE_NAMES,
@@ -55,6 +56,15 @@ _AFFORDANCE_CACHE_KEY = "affordance_runtime_v1"
 
 def _is_url(path: str) -> bool:
     return path.startswith("http://") or path.startswith("https://")
+
+
+def _image_public_url(storage_path: Optional[str], image_id: int) -> str:
+    """Map a DB ``storage_path`` to the ``/static/...`` URL the app serves."""
+    if storage_path and _is_url(storage_path):
+        return storage_path
+    if storage_path:
+        return f"/static/{to_static_path(storage_path)}"
+    return f"/static/image_{image_id}.jpg"
 
 
 def _resolve_path(storage_path: str) -> Path:
@@ -275,7 +285,6 @@ def _run_search(
 
     # ── Build results ─────────────────────────────────────────────────────────
     results: List[ImageSearchResult] = []
-    base_thumb_url = "/static/thumbnails"
 
     for img in images:
         image_id = getattr(img, "id", None)
@@ -283,11 +292,7 @@ def _run_search(
             continue
 
         storage_path = getattr(img, "storage_path", None)
-        if storage_path and storage_path.startswith("http"):
-            url = storage_path
-        else:
-            thumb_name = getattr(img, "thumbnail_path", None) or f"image_{image_id}.jpg"
-            url = f"{base_thumb_url}/{thumb_name}"
+        url = _image_public_url(storage_path, image_id)
 
         meta = getattr(img, "meta_data", {}) or {}
         imported_tags: list[str] = meta.get("tags", []) if isinstance(meta, dict) else []
@@ -366,13 +371,8 @@ def get_image_detail(
     if image is None:
         raise HTTPException(status_code=404, detail="Image not found")
 
-    # Build URL (same logic as search_images)
     storage_path = getattr(image, "storage_path", None)
-    if storage_path and storage_path.startswith("http"):
-        url = storage_path
-    else:
-        thumb_name = getattr(image, "thumbnail_path", None) or f"image_{image_id}.jpg"
-        url = f"/static/thumbnails/{thumb_name}"
+    url = _image_public_url(storage_path, image_id)
 
     # Fetch all validations for this image
     validations = (
