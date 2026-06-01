@@ -4,6 +4,9 @@
   "installCommand": "npm ci --include=dev",
   "framework": null,
   "rewrites": [
+    { "source": "/v1/:path*", "destination": "https://image-tagger-backend.onrender.com/v1/:path*" },
+    { "source": "/health", "destination": "https://image-tagger-backend.onrender.com/health" },
+    { "source": "/static/:path*", "destination": "https://image-tagger-backend.onrender.com/static/:path*" },
     { "source": "/workbench",        "destination": "/workbench/index.html" },
     { "source": "/workbench/:path*", "destination": "/workbench/index.html" },
     { "source": "/monitor",          "destination": "/monitor/index.html" },

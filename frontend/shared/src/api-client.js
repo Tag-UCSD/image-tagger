@@ -100,6 +100,8 @@ export class ApiClient {
   }
 }
 
+import { resolveApiBaseUrl, resolveAssetUrl } from "./api-config.js";
+
 // ─── Contract-aligned journey clients (B-1) ──────────────────────────────────
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
@@ -120,14 +122,34 @@ function mockDelay() {
   );
 }
 
+async function readJsonResponse(res) {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return res.json();
+  }
+  const text = await res.text();
+  if (text.trimStart().startsWith("<!")) {
+    throw new Error(
+      "API returned HTML instead of JSON. Set VITE_API_BASE_URL to your Render backend URL at build time.",
+    );
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`API returned non-JSON response (HTTP ${res.status}).`);
+  }
+}
+
 async function liveFetch(path, options = {}) {
-  const base = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+  const base = resolveApiBaseUrl();
   const res = await fetch(`${base}${path}`, options);
   if (!res.ok) {
     let body = {};
     try {
-      body = await res.json();
-    } catch {}
+      body = await readJsonResponse(res);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("HTML")) throw err;
+    }
     const err = new Error(body?.error?.message ?? `HTTP ${res.status}`);
     err.status = res.status;
     err.code = body?.error?.code;
@@ -135,7 +157,37 @@ async function liveFetch(path, options = {}) {
     throw err;
   }
   if (res.status === 204) return null;
-  return res.json();
+  return readJsonResponse(res);
+}
+
+function normalizeExplorerSearchItem(item, apiBase) {
+  const meta = item?.meta_data ?? {};
+  const thumb = item?.thumbnail_url ?? item?.url;
+  return {
+    id: item.id,
+    url: resolveAssetUrl(item.url ?? thumb, apiBase),
+    thumbnail_url: resolveAssetUrl(thumb, apiBase),
+    room_type: item.room_type ?? meta.room_type ?? null,
+    canonical_tags: item.canonical_tags ?? item.tags ?? [],
+    validation_count: item.validation_count ?? 0,
+  };
+}
+
+function normalizeExplorerSearchResponse(raw, { page, page_size }) {
+  const apiBase = resolveApiBaseUrl();
+  if (Array.isArray(raw)) {
+    const items = raw.map((item) => normalizeExplorerSearchItem(item, apiBase));
+    return { items, total: items.length, page, page_size };
+  }
+  const items = (raw?.items ?? []).map((item) =>
+    normalizeExplorerSearchItem(item, apiBase),
+  );
+  return {
+    items,
+    total: raw?.total ?? items.length,
+    page: raw?.page ?? page,
+    page_size: raw?.page_size ?? page_size,
+  };
 }
 
 function getDemoToken(role) {
@@ -629,7 +681,8 @@ export const explorer = {
     if (q) params.set("q", q);
     if (room_type) params.set("room_type", room_type);
     if (tag) params.set("tag", tag);
-    return liveFetch(`/v1/explorer/search?${params}`);
+    const raw = await liveFetch(`/v1/explorer/search?${params}`);
+    return normalizeExplorerSearchResponse(raw, { page, page_size });
   },
 
   async getImage(imageId) {
@@ -643,7 +696,16 @@ export const explorer = {
       const mocks = await import("./mocks/explorer.js");
       return { ...mocks.imageDetail, id: imageId };
     }
-    return liveFetch(`/v1/explorer/images/${imageId}`);
+    const raw = await liveFetch(`/v1/explorer/images/${imageId}/detail`);
+    const apiBase = resolveApiBaseUrl();
+    const meta = raw?.meta_data ?? {};
+    return {
+      ...raw,
+      url: resolveAssetUrl(raw?.url, apiBase),
+      thumbnail_url: resolveAssetUrl(raw?.thumbnail_url ?? raw?.url, apiBase),
+      room_type: raw?.room_type ?? meta.room_type ?? null,
+      canonical_tags: raw?.canonical_tags ?? raw?.tags ?? [],
+    };
   },
 
   async getAttributes() {

@@ -66,6 +66,9 @@ jobs:
             "version": 3,
             "routes": [
               { "handle": "filesystem" },
+              { "src": "^/v1/(.*)$", "dest": "https://image-tagger-backend.onrender.com/v1/$1" },
+              { "src": "^/health$", "dest": "https://image-tagger-backend.onrender.com/health" },
+              { "src": "^/static/(.*)$", "dest": "https://image-tagger-backend.onrender.com/static/$1" },
               { "src": "^/workbench(/.*)?$", "dest": "/workbench/index.html" },
               { "src": "^/monitor(/.*)?$",   "dest": "/monitor/index.html" },
               { "src": "^/admin(/.*)?$",     "dest": "/admin/index.html" },
