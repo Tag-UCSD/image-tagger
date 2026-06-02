@@ -7,6 +7,7 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const ALLOWED_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp']);
 
+//Hello World
 function isAllowed(file) {
     if (ALLOWED_TYPES.has(file.type)) return true;
     const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
