@@ -190,6 +190,24 @@ function normalizeExplorerSearchResponse(raw, { page, page_size }) {
   };
 }
 
+/** Map backend upload payload to the contract shape Admin UI expects. */
+function normalizeUploadResponse(raw, fileCount = 0) {
+  const details = Array.isArray(raw?.items) ? raw.items : [];
+  const items =
+    typeof raw?.items === "number"
+      ? raw.items
+      : (raw?.created_count ?? details.length ?? fileCount);
+  return {
+    ...raw,
+    items,
+    upload_items: details,
+    image_ids:
+      raw?.image_ids ?? details.map((row) => row.image_id).filter((id) => id != null),
+    job_id: raw?.job_id ?? null,
+    status: raw?.status ?? "queued",
+  };
+}
+
 /** Map backend budget fields to the contract shape Admin UI expects. */
 function normalizeBudgetResponse(raw) {
   const spent = raw?.spent_usd ?? raw?.total_spent ?? 0;
@@ -864,11 +882,14 @@ export const admin = {
     }
     const form = new FormData();
     for (const file of files) form.append("files[]", file);
-    return liveFetch("/v1/admin/upload", {
-      method: "POST",
-      headers: bearerHeaders("admin"),
-      body: form,
-    });
+    return normalizeUploadResponse(
+      await liveFetch("/v1/admin/upload", {
+        method: "POST",
+        headers: bearerHeaders("admin"),
+        body: form,
+      }),
+      files.length,
+    );
   },
 
   async getBudget() {

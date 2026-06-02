@@ -133,12 +133,16 @@ export function UploadPanel() {
 
                 {queue.length > 0 && (
                     <div role="status" className="space-y-2">
-                        {queue.map((job) => (
+                        {queue.map((job) => {
+                            const fileCount = Array.isArray(job.items)
+                                ? job.items.length
+                                : Number(job.items ?? 0);
+                            return (
                             <div key={job._key} className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 space-y-0.5">
                                 <div className="flex items-center gap-2 mb-1">
                                     <CheckCircle size={14} className="text-emerald-600" />
                                     <span className="text-xs font-semibold text-emerald-800">
-                                        Queued — {job.items} file{job.items !== 1 ? 's' : ''}
+                                        Queued — {fileCount} file{fileCount !== 1 ? 's' : ''}
                                     </span>
                                 </div>
                                 <p className="text-xs text-emerald-700">
@@ -151,7 +155,8 @@ export function UploadPanel() {
                                     Image IDs: <span className="font-mono">{job.image_ids?.join(', ')}</span>
                                 </p>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
