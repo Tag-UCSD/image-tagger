@@ -456,7 +456,9 @@ async def upload_images(
 
     for f in files:
         original_name = f.filename or "uploaded"
-        suffix = "".join(_Path(original_name).suffixes).lower() or ".jpg"
+        # Use the final extension only. ``Path.suffixes`` joins every dotted
+        # segment (e.g. ``Screenshot_..._6.11.08_PM-....png`` → invalid).
+        suffix = _Path(original_name).suffix.lower() or ".jpg"
 
         if suffix not in ALLOWED_UPLOAD_SUFFIXES:
             raise HTTPException(

@@ -106,6 +106,21 @@ async def test_admin_upload_accepts_files_bracket_field_name(
     assert resp.status_code == 202, resp.text
 
 
+@pytest.mark.asyncio
+async def test_admin_upload_accepts_dotted_timestamp_filename(
+    async_client: AsyncClient,
+    zero_spend: None,
+) -> None:
+    """macOS screenshot names like ``..._6.11.08_PM-....png`` must use ``.png`` suffix."""
+    name = "Screenshot_2026-04-27_at_6.11.08_PM-test.png"
+    resp = await async_client.post(
+        "/v1/admin/upload",
+        headers={"Authorization": f"Bearer {mint_jwt('admin')}"},
+        files=[("files[]", (name, io.BytesIO(_PNG_1X1), "image/png"))],
+    )
+    assert resp.status_code == 202, resp.text
+
+
 def _import_manifest(*, slug: str | None = None) -> dict:
     slug = slug or f"a24-{uuid.uuid4().hex[:10]}"
     return {
