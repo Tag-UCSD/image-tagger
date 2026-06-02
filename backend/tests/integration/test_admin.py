@@ -92,6 +92,20 @@ async def test_admin_upload_multipart_accepted(
     assert body["items"][0].get("image_id") == body["image_ids"][0]
 
 
+@pytest.mark.asyncio
+async def test_admin_upload_accepts_files_bracket_field_name(
+    async_client: AsyncClient,
+    zero_spend: None,
+) -> None:
+    """Contract field name ``files[]`` must be accepted (frontend uses it)."""
+    resp = await async_client.post(
+        "/v1/admin/upload",
+        headers={"Authorization": f"Bearer {mint_jwt('admin')}"},
+        files=[("files[]", ("smoke.png", io.BytesIO(_PNG_1X1), "image/png"))],
+    )
+    assert resp.status_code == 202, resp.text
+
+
 def _import_manifest(*, slug: str | None = None) -> dict:
     slug = slug or f"a24-{uuid.uuid4().hex[:10]}"
     return {

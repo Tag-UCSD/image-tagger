@@ -381,7 +381,14 @@ async def _validate_upload_payload(request: Request) -> List[UploadFile]:
             ]
         ) from exc
 
-    files = [v for v in form.getlist("files") if isinstance(v, StarletteUploadFile)]
+    # Contract documents the multipart field as ``files[]``; integration tests
+    # and httpx callers may use ``files``. Accept either name.
+    files = [
+        v
+        for key in ("files[]", "files")
+        for v in form.getlist(key)
+        if isinstance(v, StarletteUploadFile)
+    ]
     if not files:
         raise RequestValidationError(
             [
