@@ -4,7 +4,7 @@ import { DollarSign } from 'lucide-react';
 export function BudgetPanel({ budget }) {
     if (!budget) return null;
 
-    const { spent_usd, limit_usd, remaining_usd } = budget;
+    const { spent_usd = 0, limit_usd = 0, remaining_usd = 0 } = budget;
     const pct = limit_usd > 0 ? Math.min(100, (spent_usd / limit_usd) * 100) : 0;
     const danger = pct >= 80;
 

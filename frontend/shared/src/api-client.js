@@ -190,6 +190,21 @@ function normalizeExplorerSearchResponse(raw, { page, page_size }) {
   };
 }
 
+/** Map backend budget fields to the contract shape Admin UI expects. */
+function normalizeBudgetResponse(raw) {
+  const spent = raw?.spent_usd ?? raw?.total_spent ?? 0;
+  const limit = raw?.limit_usd ?? raw?.hard_limit ?? 0;
+  const remaining =
+    raw?.remaining_usd ?? Math.max(0, Number(limit) - Number(spent));
+  return {
+    ...raw,
+    spent_usd: Number(spent),
+    limit_usd: Number(limit),
+    remaining_usd: Number(remaining),
+    is_kill_switched: Boolean(raw?.is_kill_switched),
+  };
+}
+
 function getDemoToken(role) {
   const map = {
     admin: import.meta.env.VITE_DEMO_ADMIN_JWT,
@@ -867,7 +882,9 @@ export const admin = {
       const mocks = await import("./mocks/admin.js");
       return mocks.budgetResponse;
     }
-    return liveFetch("/v1/admin/budget", { headers: bearerHeaders("admin") });
+    return normalizeBudgetResponse(
+      await liveFetch("/v1/admin/budget", { headers: bearerHeaders("admin") }),
+    );
   },
 
   async setKillSwitch(enabled) {
