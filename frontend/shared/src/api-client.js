@@ -355,8 +355,14 @@ async function handleMockRequest(input, init = {}) {
     if (state === "loading") {
       await new Promise((resolve) => setTimeout(resolve, 2500));
     }
+    const fixture =
+      imageId === 102
+        ? mocks.imageDetailNoLatents
+        : imageId === 103
+          ? mocks.imageDetailLowConfidence
+          : mocks.imageDetail;
     return jsonResponse(
-      { ...cloneJson(mocks.imageDetail), id: imageId },
+      { ...cloneJson(fixture), id: imageId },
       200,
       mockHeaders(),
     );
@@ -910,7 +916,13 @@ export const explorer = {
           code: "MOCK_ERROR",
         });
       const mocks = await import("./mocks/explorer.js");
-      return { ...mocks.imageDetail, id: imageId };
+      const fixture =
+        imageId === 102
+          ? mocks.imageDetailNoLatents
+          : imageId === 103
+            ? mocks.imageDetailLowConfidence
+            : mocks.imageDetail;
+      return { ...fixture, id: imageId };
     }
     const raw = await liveFetch(`/v1/explorer/images/${imageId}/detail`);
     const apiBase = resolveApiBaseUrl();

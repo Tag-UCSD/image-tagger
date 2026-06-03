@@ -256,6 +256,83 @@ export const imageDetail = {
   ],
 };
 
+// ─── Workplan 2: no-latents variant (image 102) ─────────────────────────────
+
+export const imageDetailNoLatents = {
+  id: 102,
+  url: "https://picsum.photos/seed/102/800/600",
+  thumbnail_url: "https://picsum.photos/seed/102/400/300",
+  room_type: "bedroom",
+  canonical_tags: ["minimal", "natural_light"],
+  validation_count: 2,
+  width: 1280,
+  height: 960,
+  image_sets: [],
+  latent_observations: [],
+  linked_effects: [],
+  science: null,
+  regions: [],
+};
+
+// ─── Workplan 2: low-confidence proxy variant (image 103) ───────────────────
+
+const lowConfidenceLatents = [
+  "social.sociopetal_seating",
+  "social.shared_attention_anchor",
+  "social.interactional_visibility",
+  "spatial.prospect",
+  "social.chance_encounter_potential",
+  "social.disengagement_ease",
+].map((tag_id, i) => ({
+  image_id: 103,
+  image_set_id: null,
+  science_run_id: null,
+  tag_id,
+  label: tag_id.split(".").pop().replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+  value: i % 3,
+  value_type: "ordinal",
+  confidence: 0.15 + (i % 3) * 0.03,
+  evidence: {
+    openness_score: 0.2 + i * 0.04,
+    depth_source: "proxy",
+    proxy_version: "latent-social-v1",
+  },
+  detector_version: "latent-social-v1",
+}));
+
+export const imageDetailLowConfidence = {
+  id: 103,
+  url: "https://picsum.photos/seed/103/800/600",
+  thumbnail_url: "https://picsum.photos/seed/103/400/300",
+  room_type: "kitchen",
+  canonical_tags: ["modern", "open_plan"],
+  validation_count: 7,
+  width: 1920,
+  height: 1080,
+  image_sets: [
+    {
+      image_set_id: 2,
+      slug: "studio-cafes-2024",
+      name: "Studio Cafes 2024",
+      room_type: "kitchen",
+      source_url: null,
+      photographer: null,
+      license: "CC0",
+      license_url: "https://creativecommons.org/publicdomain/zero/1.0/",
+    },
+  ],
+  latent_observations: lowConfidenceLatents,
+  linked_effects: [
+    {
+      tag_id: "social.chance_encounter_potential",
+      domain: "behavioral",
+      mechanism: "Open layouts increase informal encounter frequency.",
+    },
+  ],
+  science: null,
+  regions: [],
+};
+
 export const attributesResponse = {
   attributes: [
     {
