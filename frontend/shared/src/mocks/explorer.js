@@ -37,6 +37,164 @@ export const searchEmptyResponse = {
   page_size: 20,
 };
 
+// ─── Workplan 2: image sets ─────────────────────────────────────────────────
+
+export const imageSetsResponse = {
+  items: [
+    {
+      id: 1,
+      slug: "atlas-living-rooms-2024",
+      name: "Atlas Living Rooms 2024",
+      description: "Curated residential interiors with full provenance.",
+      source: "internal_curation",
+      item_count: 250,
+      created_at: "2026-05-01T10:00:00Z",
+    },
+    {
+      id: 2,
+      slug: "studio-cafes-2024",
+      name: "Studio Cafes 2024",
+      description: "Third-place cafe interiors for social affordance work.",
+      source: "creative_commons_flickr",
+      item_count: 180,
+      created_at: "2026-05-10T14:30:00Z",
+    },
+  ],
+};
+
+export const imageSetsEmptyResponse = { items: [] };
+
+const fullLatentObservations = [
+  {
+    image_id: 101,
+    image_set_id: 1,
+    science_run_id: 8801,
+    tag_id: "social.sociopetal_seating",
+    label: "Sociopetal Seating",
+    value: 3,
+    value_type: "ordinal",
+    confidence: 0.62,
+    evidence: {
+      openness_score: 0.71,
+      seating_cluster_proxy: 0.58,
+      proxy_version: "latent-social-v1",
+    },
+    detector_version: "latent-social-v1",
+  },
+  {
+    image_id: 101,
+    image_set_id: 1,
+    science_run_id: 8801,
+    tag_id: "social.shared_attention_anchor",
+    label: "Shared Attention Anchor",
+    value: 2,
+    value_type: "ordinal",
+    confidence: 0.48,
+    evidence: {
+      central_focus_proxy: 0.66,
+      edge_density: 0.32,
+      proxy_version: "latent-social-v1",
+    },
+    detector_version: "latent-social-v1",
+  },
+  {
+    image_id: 101,
+    image_set_id: 1,
+    science_run_id: 8801,
+    tag_id: "social.interactional_visibility",
+    label: "Interactional Visibility",
+    value: 3,
+    value_type: "ordinal",
+    confidence: 0.55,
+    evidence: {
+      openness_score: 0.71,
+      depth_source: "proxy",
+      proxy_version: "latent-social-v1",
+    },
+    detector_version: "latent-social-v1",
+  },
+  {
+    image_id: 101,
+    image_set_id: 1,
+    science_run_id: 8801,
+    tag_id: "spatial.prospect",
+    label: "Prospect",
+    value: 4,
+    value_type: "ordinal",
+    confidence: 0.7,
+    evidence: {
+      openness_score: 0.82,
+      depth_spread: 0.74,
+      depth_source: "proxy",
+      proxy_version: "latent-social-v1",
+    },
+    detector_version: "latent-social-v1",
+  },
+  {
+    image_id: 101,
+    image_set_id: 1,
+    science_run_id: 8801,
+    tag_id: "social.chance_encounter_potential",
+    label: "Chance Encounter Potential",
+    value: 2,
+    value_type: "ordinal",
+    confidence: 0.41,
+    evidence: {
+      path_complexity_proxy: 0.45,
+      segmentation_source: "proxy",
+      proxy_version: "latent-social-v1",
+    },
+    detector_version: "latent-social-v1",
+  },
+  {
+    image_id: 101,
+    image_set_id: 1,
+    science_run_id: 8801,
+    tag_id: "social.disengagement_ease",
+    label: "Disengagement Ease",
+    value: 3,
+    value_type: "ordinal",
+    confidence: 0.53,
+    evidence: {
+      openness_score: 0.71,
+      edge_density: 0.32,
+      proxy_version: "latent-social-v1",
+    },
+    detector_version: "latent-social-v1",
+  },
+];
+
+const linkedEffects = [
+  {
+    tag_id: "social.sociopetal_seating",
+    domain: "social",
+    mechanism: "Face-to-face seating supports conversation initiation.",
+  },
+  {
+    tag_id: "spatial.prospect",
+    domain: "cognitive",
+    mechanism: "Long sightlines reduce cognitive load and aid wayfinding.",
+  },
+  {
+    tag_id: "social.shared_attention_anchor",
+    domain: "affective",
+    mechanism: "A shared focal point synchronizes attention and mood.",
+  },
+];
+
+const sampleMembership = [
+  {
+    image_set_id: 1,
+    slug: "atlas-living-rooms-2024",
+    name: "Atlas Living Rooms 2024",
+    room_type: "living_room",
+    source_url: "https://example.com/atlas/lr-101",
+    photographer: "A. Renner",
+    license: "CC BY 4.0",
+    license_url: "https://creativecommons.org/licenses/by/4.0/",
+  },
+];
+
 export const imageDetail = {
   id: 101,
   url: "https://picsum.photos/seed/101/800/600",
@@ -46,6 +204,9 @@ export const imageDetail = {
   validation_count: 4,
   width: 1600,
   height: 1200,
+  image_sets: sampleMembership,
+  latent_observations: fullLatentObservations,
+  linked_effects: linkedEffects,
   science: {
     run_id: 8801,
     run_status: "completed",

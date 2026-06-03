@@ -39,3 +39,4 @@ ai_*.md
 *llm*.md
 *AI_COLLAB*.md
 *QUICKSTART*.md
+.playwright-mcp/

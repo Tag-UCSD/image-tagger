@@ -371,6 +371,30 @@ async function handleMockRequest(input, init = {}) {
     );
   }
 
+  if (path === "/v1/explorer/image-sets" && method === "GET") {
+    const state = mockFlag("explorer");
+    if (state === "error") {
+      return jsonResponse(
+        { error: { code: "MOCK_ERROR", message: "Mock image-sets error" } },
+        500,
+        mockHeaders(),
+      );
+    }
+    const mocks = await import("./mocks/explorer.js");
+    if (state === "empty") {
+      return jsonResponse(
+        cloneJson(mocks.imageSetsEmptyResponse),
+        200,
+        mockHeaders(),
+      );
+    }
+    return jsonResponse(
+      cloneJson(mocks.imageSetsResponse),
+      200,
+      mockHeaders(),
+    );
+  }
+
   if (path === "/v1/workbench/next" && method === "GET") {
     const state = mockFlag("workbench");
     if (state === "error") {
@@ -403,6 +427,22 @@ async function handleMockRequest(input, init = {}) {
   if (path === "/v1/workbench/validate" && method === "POST") {
     const mocks = await import("./mocks/workbench.js");
     return jsonResponse(cloneJson(mocks.validateResponse), 200, mockHeaders());
+  }
+
+  if (path === "/v1/workbench/latent/next" && method === "GET") {
+    const state = mockFlag("workbench");
+    if (state === "error") {
+      return jsonResponse(
+        { error: { code: "MOCK_ERROR", message: "Mock workbench error" } },
+        500,
+        mockHeaders(),
+      );
+    }
+    const mocks = await import("./mocks/workbench.js");
+    if (state === "empty") {
+      return jsonResponse(cloneJson(mocks.nextEmpty), 200, mockHeaders());
+    }
+    return jsonResponse(cloneJson(mocks.nextLatent), 200, mockHeaders());
   }
 
   if (path === "/v1/workbench/region" && method === "POST") {
@@ -474,6 +514,54 @@ async function handleMockRequest(input, init = {}) {
     const mocks = await import("./mocks/monitor.js");
     return jsonResponse(
       cloneJson(mocks.pipelineHealthResponse),
+      200,
+      mockHeaders(),
+    );
+  }
+
+  if (
+    path.match(/^\/v1\/monitor\/image-sets\/[^/]+\/latent-status$/) &&
+    method === "GET"
+  ) {
+    const state = mockFlag("monitor");
+    if (state === "error") {
+      return jsonResponse(
+        { error: { code: "MOCK_ERROR", message: "Mock monitor error" } },
+        500,
+        mockHeaders(),
+      );
+    }
+    if (
+      typeof window !== "undefined" &&
+      window.__MOCK_FLAGS?.monitorRole === "non-supervisor"
+    ) {
+      return jsonResponse(
+        { error: { code: "FORBIDDEN", message: "Forbidden" } },
+        403,
+        mockHeaders(),
+      );
+    }
+    const mocks = await import("./mocks/monitor.js");
+    if (state === "empty") {
+      return jsonResponse(
+        cloneJson(mocks.latentStatusEmptyResponse),
+        200,
+        mockHeaders(),
+      );
+    }
+    const variant =
+      typeof window !== "undefined"
+        ? window.__MOCK_FLAGS?.latentStatus
+        : null;
+    if (variant === "suspicious") {
+      return jsonResponse(
+        cloneJson(mocks.latentStatusSuspiciousResponse),
+        200,
+        mockHeaders(),
+      );
+    }
+    return jsonResponse(
+      cloneJson(mocks.latentStatusResponse),
       200,
       mockHeaders(),
     );
@@ -570,6 +658,67 @@ async function handleMockRequest(input, init = {}) {
         items: count,
         image_ids: Array.from({ length: count }, (_, index) => 101 + index),
       },
+      200,
+      mockHeaders(),
+    );
+  }
+
+  if (path === "/v1/admin/image-sets/import" && method === "POST") {
+    if (
+      typeof window !== "undefined" &&
+      window.__MOCK_FLAGS?.adminRole === "non-admin"
+    ) {
+      return jsonResponse(
+        { error: { code: "FORBIDDEN", message: "Forbidden" } },
+        403,
+        mockHeaders(),
+      );
+    }
+    const mocks = await import("./mocks/admin.js");
+    if (
+      typeof window !== "undefined" &&
+      window.__MOCK_FLAGS?.importImageSet === "validation"
+    ) {
+      return jsonResponse(
+        cloneJson(mocks.importImageSetValidationError),
+        422,
+        mockHeaders(),
+      );
+    }
+    const payload = parseJsonBody(init) || {};
+    return jsonResponse(
+      {
+        ...cloneJson(mocks.importImageSetResponse),
+        slug:
+          payload?.slug ?? mocks.importImageSetResponse.slug,
+        total_in_file:
+          Array.isArray(payload?.images)
+            ? payload.images.length
+            : mocks.importImageSetResponse.total_in_file,
+      },
+      200,
+      mockHeaders(),
+    );
+  }
+
+  if (
+    path.match(/^\/v1\/admin\/image-sets\/[^/]+\/latent-runs$/) &&
+    method === "POST"
+  ) {
+    if (
+      typeof window !== "undefined" &&
+      window.__MOCK_FLAGS?.adminRole === "non-admin"
+    ) {
+      return jsonResponse(
+        { error: { code: "FORBIDDEN", message: "Forbidden" } },
+        403,
+        mockHeaders(),
+      );
+    }
+    const mocks = await import("./mocks/admin.js");
+    const imageSetId = path.split("/")[4];
+    return jsonResponse(
+      { ...cloneJson(mocks.latentRunResponse), image_set_id: imageSetId },
       200,
       mockHeaders(),
     );
@@ -695,7 +844,17 @@ if (USE_MOCKS) {
 // ─── Explorer (public — no auth) ─────────────────────────────────────────────
 
 export const explorer = {
-  async search({ q = "", page = 1, page_size = 20, room_type, tag } = {}) {
+  async search({
+    q = "",
+    page = 1,
+    page_size = 20,
+    room_type,
+    tag,
+    image_set,
+    latent_tag,
+    effect_domain,
+    min_value,
+  } = {}) {
     if (USE_MOCKS) {
       await mockDelay();
       const state = mockFlag("explorer");
@@ -714,8 +873,32 @@ export const explorer = {
     if (q) params.set("q", q);
     if (room_type) params.set("room_type", room_type);
     if (tag) params.set("tag", tag);
+    if (image_set) params.set("image_set", image_set);
+    if (latent_tag) params.set("latent_tag", latent_tag);
+    if (effect_domain) params.set("effect_domain", effect_domain);
+    if (min_value !== undefined && min_value !== null && min_value !== "") {
+      params.set("min_value", String(min_value));
+    }
     const raw = await liveFetch(`/v1/explorer/search?${params}`);
     return normalizeExplorerSearchResponse(raw, { page, page_size });
+  },
+
+  async listImageSets() {
+    if (USE_MOCKS) {
+      await mockDelay();
+      const state = mockFlag("explorer");
+      if (state === "error")
+        throw Object.assign(new Error("Mock image-sets error"), {
+          code: "MOCK_ERROR",
+        });
+      const mocks = await import("./mocks/explorer.js");
+      if (state === "empty") return mocks.imageSetsEmptyResponse;
+      return mocks.imageSetsResponse;
+    }
+    const raw = await liveFetch("/v1/explorer/image-sets");
+    // Normalize either {items:[…]} or a bare array.
+    const items = Array.isArray(raw) ? raw : (raw?.items ?? []);
+    return { items };
   },
 
   async getImage(imageId) {
@@ -738,6 +921,10 @@ export const explorer = {
       thumbnail_url: resolveAssetUrl(raw?.thumbnail_url ?? raw?.url, apiBase),
       room_type: raw?.room_type ?? meta.room_type ?? null,
       canonical_tags: raw?.canonical_tags ?? raw?.tags ?? [],
+      image_sets: raw?.image_sets ?? raw?.memberships ?? [],
+      latent_observations:
+        raw?.latent_observations ?? raw?.latents ?? [],
+      linked_effects: raw?.linked_effects ?? raw?.effects ?? [],
     };
   },
 
@@ -807,6 +994,23 @@ export const workbench = {
       body: JSON.stringify(body),
     });
   },
+
+  async getNextLatent() {
+    if (USE_MOCKS) {
+      await mockDelay();
+      const state = mockFlag("workbench");
+      if (state === "error")
+        throw Object.assign(new Error("Mock workbench error"), {
+          code: "MOCK_ERROR",
+        });
+      const mocks = await import("./mocks/workbench.js");
+      if (state === "empty") return mocks.nextEmpty;
+      return mocks.nextLatent;
+    }
+    return liveFetch("/v1/workbench/latent/next", {
+      headers: bearerHeaders("tagger"),
+    });
+  },
 };
 
 // ─── Monitor (supervisor role) ────────────────────────────────────────────────
@@ -854,6 +1058,34 @@ export const monitor = {
     return liveFetch("/v1/monitor/irr", {
       headers: bearerHeaders("supervisor"),
     });
+  },
+
+  async getLatentStatus(imageSetId) {
+    if (USE_MOCKS) {
+      await mockDelay();
+      const state = mockFlag("monitor");
+      if (state === "error")
+        throw Object.assign(new Error("Mock monitor error"), {
+          code: "MOCK_ERROR",
+        });
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.monitorRole === "non-supervisor"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
+      const mocks = await import("./mocks/monitor.js");
+      if (state === "empty") return mocks.latentStatusEmptyResponse;
+      const variant =
+        typeof window !== "undefined"
+          ? window.__MOCK_FLAGS?.latentStatus
+          : null;
+      if (variant === "suspicious") return mocks.latentStatusSuspiciousResponse;
+      return mocks.latentStatusResponse;
+    }
+    return liveFetch(
+      `/v1/monitor/image-sets/${encodeURIComponent(imageSetId)}/latent-status`,
+      { headers: bearerHeaders("supervisor") },
+    );
   },
 };
 
@@ -927,6 +1159,76 @@ export const admin = {
       },
       body: JSON.stringify({ enabled }),
     });
+  },
+
+  async importImageSet(manifest) {
+    if (USE_MOCKS) {
+      await mockDelay();
+      const state = mockFlag("admin");
+      if (state === "error")
+        throw Object.assign(new Error("Mock import error"), {
+          code: "MOCK_ERROR",
+        });
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.adminRole === "non-admin"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
+      const mocks = await import("./mocks/admin.js");
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.importImageSet === "validation"
+      ) {
+        const err = new Error("Request validation failed");
+        err.status = 422;
+        err.code = "VALIDATION_ERROR";
+        err.body = mocks.importImageSetValidationError;
+        throw err;
+      }
+      return {
+        ...mocks.importImageSetResponse,
+        slug: manifest?.slug ?? mocks.importImageSetResponse.slug,
+        total_in_file: manifest?.images?.length
+          ?? mocks.importImageSetResponse.total_in_file,
+      };
+    }
+    return liveFetch("/v1/admin/image-sets/import", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...bearerHeaders("admin"),
+      },
+      body: JSON.stringify(manifest),
+    });
+  },
+
+  async runLatentDetectors(imageSetId) {
+    if (USE_MOCKS) {
+      await mockDelay();
+      const state = mockFlag("admin");
+      if (state === "error")
+        throw Object.assign(new Error("Mock latent-run error"), {
+          code: "MOCK_ERROR",
+        });
+      if (
+        typeof window !== "undefined" &&
+        window.__MOCK_FLAGS?.adminRole === "non-admin"
+      )
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
+      const mocks = await import("./mocks/admin.js");
+      return { ...mocks.latentRunResponse, image_set_id: imageSetId };
+    }
+    return liveFetch(
+      `/v1/admin/image-sets/${encodeURIComponent(imageSetId)}/latent-runs`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...bearerHeaders("admin"),
+        },
+        body: JSON.stringify({}),
+      },
+    );
   },
 };
 
