@@ -7,6 +7,13 @@ export const searchResponse = {
       room_type: "living_room",
       canonical_tags: ["biophilic", "window", "daylight"],
       validation_count: 4,
+      top_latent: {
+        tag_id: "spatial.prospect",
+        label: "Prospect",
+        value: 4,
+        confidence: 0.7,
+        effect_mechanism: "Long sightlines reduce cognitive load and aid wayfinding.",
+      },
     },
     {
       id: 102,
@@ -15,6 +22,7 @@ export const searchResponse = {
       room_type: "bedroom",
       canonical_tags: ["minimal", "natural_light"],
       validation_count: 2,
+      // no top_latent — tests that cards without latents don't break
     },
     {
       id: 103,
@@ -23,6 +31,13 @@ export const searchResponse = {
       room_type: "kitchen",
       canonical_tags: ["modern", "open_plan"],
       validation_count: 7,
+      top_latent: {
+        tag_id: "social.chance_encounter_potential",
+        label: "Chance Encounter",
+        value: 0,
+        confidence: 0.15,
+        effect_mechanism: "Open layouts increase informal encounter frequency.",
+      },
     },
   ],
   total: 37,

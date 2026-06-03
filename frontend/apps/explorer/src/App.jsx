@@ -226,7 +226,7 @@ export default function ExplorerApp() {
             />
           ) : results ? (
             <>
-              <ImageGrid images={results.items} loading={loading} onImageClick={setSelectedImageId} />
+              <ImageGrid images={results.items} loading={loading} onImageClick={setSelectedImageId} effectDomain={effectDomain} />
               {results.total > results.page_size && (
                 <div className="px-4 py-4 border-t border-gray-200 bg-white flex justify-center">
                   <Pagination
