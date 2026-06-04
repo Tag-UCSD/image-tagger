@@ -67,6 +67,7 @@ export default function WorkbenchApp() {
       await loadNext();
     } catch (err) {
       setSubmitError(err.message || 'Submission failed — please try again');
+    } finally {
       setSubmitting(false);
     }
   }, [current, loadNext]);

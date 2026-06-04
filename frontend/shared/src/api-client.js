@@ -927,13 +927,20 @@ export const explorer = {
     const raw = await liveFetch(`/v1/explorer/images/${imageId}/detail`);
     const apiBase = resolveApiBaseUrl();
     const meta = raw?.meta_data ?? {};
+    // Backend detail endpoint returns tags as List[TagInfo] objects {label, source, …};
+    // components expect canonical_tags as string[].
+    const rawTags = raw?.canonical_tags ?? raw?.tags ?? [];
+    const canonicalTags = rawTags.map(t => (typeof t === "string" ? t : t?.label)).filter(Boolean);
+    // Backend ImageSetMembership uses `id`; components key/read on `image_set_id`.
+    const rawSets = raw?.image_sets ?? raw?.memberships ?? [];
+    const imageSets = rawSets.map(m => ({ ...m, image_set_id: m.image_set_id ?? m.id }));
     return {
       ...raw,
       url: resolveAssetUrl(raw?.url, apiBase),
       thumbnail_url: resolveAssetUrl(raw?.thumbnail_url ?? raw?.url, apiBase),
       room_type: raw?.room_type ?? meta.room_type ?? null,
-      canonical_tags: raw?.canonical_tags ?? raw?.tags ?? [],
-      image_sets: raw?.image_sets ?? raw?.memberships ?? [],
+      canonical_tags: canonicalTags,
+      image_sets: imageSets,
       latent_observations:
         raw?.latent_observations ?? raw?.latents ?? [],
       linked_effects: raw?.linked_effects ?? raw?.effects ?? [],
