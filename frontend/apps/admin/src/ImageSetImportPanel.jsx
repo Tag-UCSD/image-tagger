@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { admin, Button } from '@shared';
-import { FolderInput, CheckCircle, X, AlertCircle } from 'lucide-react';
+import { FolderInput, CheckCircle, X, AlertCircle, Play, Loader2 } from 'lucide-react';
 
 const EXAMPLE_MANIFEST = JSON.stringify({
   name: "My Collection",
@@ -31,6 +31,9 @@ export function ImageSetImportPanel() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
   const [apiError, setApiError] = useState(null);
+  const [latentRunResult, setLatentRunResult] = useState(null);
+  const [latentRunning, setLatentRunning] = useState(false);
+  const [latentRunError, setLatentRunError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,6 +64,24 @@ export function ImageSetImportPanel() {
     setResult(null);
     setValidationError(null);
     setApiError(null);
+    setLatentRunResult(null);
+    setLatentRunning(false);
+    setLatentRunError(null);
+  };
+
+  const handleRunLatents = async () => {
+    if (!result?.image_set_id) return;
+    setLatentRunning(true);
+    setLatentRunError(null);
+    try {
+      const data = await admin.runLatentDetectors(result.image_set_id);
+      setLatentRunResult(data);
+    } catch (err) {
+      const msg = err.body?.error?.details?.[0]?.message ?? err.message ?? 'Failed to start latent run.';
+      setLatentRunError(msg);
+    } finally {
+      setLatentRunning(false);
+    }
   };
 
   return (
@@ -72,7 +93,14 @@ export function ImageSetImportPanel() {
 
       <div className="p-4 space-y-3">
         {result ? (
-          <ImportSuccess result={result} onReset={handleReset} />
+          <ImportSuccess
+            result={result}
+            onReset={handleReset}
+            onRunLatents={handleRunLatents}
+            latentRunning={latentRunning}
+            latentRunResult={latentRunResult}
+            latentRunError={latentRunError}
+          />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
             <p className="text-xs text-gray-500">
@@ -126,7 +154,7 @@ export function ImageSetImportPanel() {
   );
 }
 
-function ImportSuccess({ result, onReset }) {
+function ImportSuccess({ result, onReset, onRunLatents, latentRunning, latentRunResult, latentRunError }) {
   const hasErrors = result.errors?.length > 0;
   return (
     <div className="space-y-3">
@@ -163,7 +191,58 @@ function ImportSuccess({ result, onReset }) {
         </div>
       )}
 
+      {/* Latent run controls */}
+      <div className="pt-2 border-t border-gray-100 space-y-2">
+        {latentRunResult ? (
+          <LatentRunSummary data={latentRunResult} />
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={onRunLatents}
+              disabled={latentRunning}
+            >
+              {latentRunning
+                ? <><Loader2 size={14} className="animate-spin mr-1.5 inline" />Running…</>
+                : <><Play size={14} className="mr-1.5 inline" />Run latent detectors</>}
+            </Button>
+            {latentRunError && (
+              <div role="alert" className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2">
+                <AlertCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-red-700">{latentRunError}</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       <Button variant="secondary" onClick={onReset}>Import another</Button>
+    </div>
+  );
+}
+
+function LatentRunSummary({ data }) {
+  const rows = [
+    { label: 'Queued', value: data.queued ?? 0, color: 'text-blue-700' },
+    { label: 'Already complete', value: data.already_complete ?? 0, color: 'text-emerald-700' },
+    { label: 'Running', value: data.running ?? 0, color: 'text-amber-700' },
+    { label: 'Failed', value: data.failed ?? 0, color: 'text-red-700' },
+  ];
+  return (
+    <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 space-y-2">
+      <div className="flex items-center gap-1.5">
+        <CheckCircle size={14} className="text-blue-600 shrink-0" />
+        <p className="text-xs font-semibold text-blue-800">Latent run queued</p>
+      </div>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
+        {rows.map(({ label, value, color }) => (
+          <React.Fragment key={label}>
+            <dt className="text-xs text-gray-500">{label}</dt>
+            <dd className={`text-xs font-semibold tabular-nums ${color}`}>{value}</dd>
+          </React.Fragment>
+        ))}
+      </dl>
     </div>
   );
 }
