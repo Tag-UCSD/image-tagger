@@ -3,6 +3,7 @@ import { admin, demoAccess, Header, Button } from '@shared';
 import { UploadPanel } from './UploadPanel';
 import { BudgetPanel } from './BudgetPanel';
 import { KillSwitch } from './KillSwitch';
+import { ImageSetImportPanel } from './ImageSetImportPanel';
 import { ShieldOff, Lock, RefreshCcw, Loader2, AlertTriangle } from 'lucide-react';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -70,6 +71,7 @@ export default function AdminApp() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="space-y-6">
                             <UploadPanel />
+                            <ImageSetImportPanel />
                             <BudgetPanel budget={budget} />
                         </div>
                         <div>
