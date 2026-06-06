@@ -99,3 +99,40 @@ export const killSwitchDisabled = {
   hard_limit: 15.0,
   is_kill_switched: false,
 };
+
+// ─── Workplan 2: image-set import + latent runs ─────────────────────────────
+
+export const importImageSetResponse = {
+  image_set_id: 1,
+  slug: "atlas-living-rooms-2024",
+  created_images: 3,
+  reused_images: 0,
+  created_items: 3,
+  skipped_items: 0,
+  errors: [],
+  total_in_file: 3,
+};
+
+export const importImageSetValidationError = {
+  error: {
+    code: "VALIDATION_ERROR",
+    message: "Request validation failed",
+    request_id: "f1cf6f24-7d0c-43ab-b9d3-1c1cfb87f0d9",
+    details: [
+      {
+        field: "images",
+        message: "Image list must not be empty",
+        type: "min_items",
+      },
+    ],
+  },
+};
+
+export const latentRunResponse = {
+  image_set_id: 1,
+  queued: 5,
+  running: 0,
+  completed: 245,
+  failed: 0,
+  already_complete: 245,
+};

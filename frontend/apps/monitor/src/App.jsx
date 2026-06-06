@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { monitor, demoAccess, Header, Button } from '@shared';
+import { monitor, explorer, demoAccess, Header, Button } from '@shared';
 import { VelocityChart } from './VelocityChart';
 import { IRRTable } from './IRRTable';
-import { ShieldOff, Lock, RefreshCcw, Loader2, AlertTriangle } from 'lucide-react';
+import { LatentStatusPanel } from './LatentStatusPanel';
+import { ShieldOff, Lock, RefreshCcw, Loader2, AlertTriangle, Activity } from 'lucide-react';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
@@ -13,16 +14,24 @@ export default function MonitorApp() {
     const [irr, setIRR] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
 
+    const [imageSets, setImageSets] = useState([]);
+    const [selectedSetId, setSelectedSetId] = useState('');
+    const [latentStatus, setLatentStatus] = useState(null);
+    const [latentLoading, setLatentLoading] = useState(false);
+    const [latentError, setLatentError] = useState(null);
+
     const loadData = useCallback(async () => {
         setAppState('loading');
         setErrorMsg(null);
         try {
-            const [velData, irrData] = await Promise.all([
+            const [velData, irrData, setsData] = await Promise.all([
                 monitor.getVelocity(),
                 monitor.getIRR(),
+                explorer.listImageSets().catch(() => ({ items: [] })),
             ]);
             setVelocity(velData);
             setIRR(irrData);
+            setImageSets(setsData?.items ?? []);
             setAppState('loaded');
         } catch (err) {
             if (err.status === 403) {
@@ -31,6 +40,22 @@ export default function MonitorApp() {
                 setErrorMsg(err.message || 'Failed to load monitor data');
                 setAppState('error');
             }
+        }
+    }, []);
+
+    const handleSetChange = useCallback(async (setId) => {
+        setSelectedSetId(setId);
+        if (!setId) { setLatentStatus(null); setLatentError(null); return; }
+        setLatentLoading(true);
+        setLatentError(null);
+        setLatentStatus(null);
+        try {
+            const data = await monitor.getLatentStatus(setId);
+            setLatentStatus(data);
+        } catch (err) {
+            setLatentError(err.message || 'Failed to load latent status');
+        } finally {
+            setLatentLoading(false);
         }
     }, []);
 
@@ -70,6 +95,46 @@ export default function MonitorApp() {
                     <>
                         <VelocityChart series={velocity?.series ?? []} />
                         <IRRTable rows={irr?.rows ?? []} />
+
+                        {/* Latent status section */}
+                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                            <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+                                <Activity className="text-purple-500" size={18} />
+                                <h2 className="font-semibold text-gray-900 text-sm">Latent Detector Status</h2>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <label htmlFor="latent-set-select" className="text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">
+                                        Image set
+                                    </label>
+                                    <select
+                                        id="latent-set-select"
+                                        value={selectedSetId}
+                                        onChange={(e) => handleSetChange(e.target.value)}
+                                        className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    >
+                                        <option value="">Select an image set…</option>
+                                        {imageSets.map((s) => (
+                                            <option key={s.id ?? s.slug} value={s.id ?? s.slug}>
+                                                {s.name ?? s.slug}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {!selectedSetId && !latentLoading && (
+                                    <p className="text-sm text-gray-500 text-center py-4">
+                                        Select an image set above to view latent detector status.
+                                    </p>
+                                )}
+
+                                <LatentStatusPanel
+                                    status={latentStatus}
+                                    loading={latentLoading}
+                                    error={latentError}
+                                />
+                            </div>
+                        </div>
                     </>
                 )}
             </div>

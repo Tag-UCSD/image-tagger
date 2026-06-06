@@ -1,3 +1,5 @@
+node_modules/
+
 # macOS system files
 .DS_Store
 **/.DS_Store
@@ -39,3 +41,4 @@ ai_*.md
 *llm*.md
 *AI_COLLAB*.md
 *QUICKSTART*.md
+.playwright-mcp/

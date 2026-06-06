@@ -62,3 +62,28 @@ export const validateResponse = {
   validation_id: 4402,
   accepted: true,
 };
+
+// ─── Workplan 2: latent validation assignment ───────────────────────────────
+
+export const nextLatent = {
+  image: { ...baseImage, id: 104, url: "https://picsum.photos/seed/104/800/600" },
+  latent: {
+    tag_id: "spatial.prospect",
+    label: "Prospect",
+    value: 3,
+    value_type: "ordinal",
+    confidence: 0.41,
+    evidence: {
+      openness_score: 0.62,
+      depth_spread: 0.48,
+      depth_source: "proxy",
+      proxy_version: "latent-social-v1",
+    },
+    detector_version: "latent-social-v1",
+  },
+};
+
+export const validateLatentResponse = {
+  validation_id: 4501,
+  accepted: true,
+};

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { workbench, demoAccess, Header, EmptyState, ErrorBanner } from '@shared';
 import { AttributeForm } from './AttributeForm';
+import { LatentValidationPanel } from './LatentValidationPanel';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { RefreshCw, Inbox, AlertTriangle, Loader2, ShieldOff } from 'lucide-react';
 
@@ -15,13 +16,17 @@ export default function WorkbenchApp() {
   const [submitting, setSubmitting] = useState(false);
   const [count, setCount] = useState(0);
   const formRef = useRef(null);
+  const [mode, setModeState] = useState('attribute');
+  const modeRef = useRef('attribute');
 
   const loadNext = useCallback(async () => {
     setAppState('loading');
     setErrorMsg(null);
     setSubmitError(null);
     try {
-      const data = await workbench.getNext();
+      const data = modeRef.current === 'latent'
+        ? await workbench.getNextLatent()
+        : await workbench.getNext();
       if (data.empty) {
         setCurrent(null);
         setAppState('empty');
@@ -43,21 +48,26 @@ export default function WorkbenchApp() {
     loadNext();
   }, [loadNext]);
 
+  const handleModeChange = useCallback((m) => {
+    modeRef.current = m;
+    setModeState(m);
+    loadNext();
+  }, [loadNext]);
+
   const handleSubmit = useCallback(async (value, duration_ms) => {
     if (!current) return;
     setSubmitting(true);
     setSubmitError(null);
+    const body = modeRef.current === 'latent'
+      ? { image_id: current.image.id, attribute_key: current.latent.tag_id, value, duration_ms }
+      : { image_id: current.image.id, attribute_key: current.assignment.attribute_key, value, duration_ms };
     try {
-      await workbench.validate({
-        image_id: current.image.id,
-        attribute_key: current.assignment.attribute_key,
-        value,
-        duration_ms,
-      });
+      await workbench.validate(body);
       setCount((c) => c + 1);
       await loadNext();
     } catch (err) {
       setSubmitError(err.message || 'Submission failed — please try again');
+    } finally {
       setSubmitting(false);
     }
   }, [current, loadNext]);
@@ -87,6 +97,8 @@ export default function WorkbenchApp() {
             submitError={submitError}
             onSubmit={handleSubmit}
             onDismissError={() => setSubmitError(null)}
+            mode={mode}
+            onModeChange={handleModeChange}
           />
         )}
       </div>
@@ -138,8 +150,8 @@ function EmptyQueueView({ onRetry }) {
   );
 }
 
-function AssignmentView({ current, count, formRef, submitting, submitError, onSubmit, onDismissError }) {
-  const { image, assignment } = current;
+function AssignmentView({ current, count, formRef, submitting, submitError, onSubmit, onDismissError, mode, onModeChange }) {
+  const { image, assignment, latent } = current;
   return (
     <div className="flex flex-col lg:flex-row h-full">
       {/* Image panel */}
@@ -154,9 +166,22 @@ function AssignmentView({ current, count, formRef, submitting, submitError, onSu
 
       {/* Form panel */}
       <aside className="w-full lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col overflow-y-auto">
-        {/* Progress indicator */}
-        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assignment</span>
+        {/* Header: mode toggle + count */}
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+          <div className="flex rounded-md border border-gray-200 overflow-hidden text-xs shrink-0">
+            {[['attribute', 'Attribute'], ['latent', 'Latent']].map(([m, label]) => (
+              <button
+                key={m}
+                onClick={() => onModeChange(m)}
+                className={[
+                  'px-3 py-1 font-medium transition-colors',
+                  mode === m ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50',
+                ].join(' ')}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {count > 0 && (
             <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 font-medium">
               {count} submitted
@@ -179,12 +204,21 @@ function AssignmentView({ current, count, formRef, submitting, submitError, onSu
               <ErrorBannerInline message={submitError} onDismiss={onDismissError} />
             </div>
           )}
-          <AttributeForm
-            ref={formRef}
-            assignment={assignment}
-            onSubmit={onSubmit}
-            submitting={submitting}
-          />
+          {mode === 'latent' && latent ? (
+            <LatentValidationPanel
+              ref={formRef}
+              latent={latent}
+              onSubmit={onSubmit}
+              submitting={submitting}
+            />
+          ) : (
+            <AttributeForm
+              ref={formRef}
+              assignment={assignment}
+              onSubmit={onSubmit}
+              submitting={submitting}
+            />
+          )}
         </div>
 
         {/* Keyboard hint */}

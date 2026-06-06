@@ -127,7 +127,7 @@ function NumberField({ value, onChange, min, max, step }) {
           step={numStep}
           value={value || numMin}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 h-2 rounded appearance-none cursor-pointer accent-blue-600"
+          className="flex-1 cursor-pointer accent-blue-600"
           aria-label="Value slider"
         />
         <input

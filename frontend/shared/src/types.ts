@@ -83,6 +83,161 @@ export type ImageDetail = ImageSummary & {
   height: number;
   science: SciencePayload | null;
   regions: Region[];
+  image_sets?: ImageSetMembership[];
+  latent_observations?: LatentObservation[];
+  linked_effects?: LinkedEffect[];
+};
+
+// ─── Workplan 2: image sets ─────────────────────────────────────────────────
+
+export type ImageSetSummary = {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  source: string | null;
+  item_count: number;
+  created_at: string;
+};
+
+export type ImageSetMembership = {
+  image_set_id: number;
+  slug: string;
+  name: string;
+  room_type: string | null;
+  source_url: string | null;
+  photographer: string | null;
+  license: string | null;
+  license_url: string | null;
+};
+
+export type ImageSetImportImage = {
+  filename: string;
+  url?: string;
+  path?: string;
+  storage_path?: string;
+  room_type?: string;
+  source_url?: string;
+  photographer?: string;
+  license?: string;
+  license_url?: string;
+  tags?: string[];
+  meta_data?: Record<string, unknown>;
+};
+
+export type ImageSetImportRequest = {
+  name: string;
+  slug: string;
+  description?: string;
+  source?: string;
+  provenance?: Record<string, unknown>;
+  images: ImageSetImportImage[];
+};
+
+export type ImageSetImportResponse = {
+  image_set_id: number;
+  slug: string;
+  created_images: number;
+  reused_images: number;
+  created_items: number;
+  skipped_items: number;
+  errors: Array<{ filename: string; message: string }>;
+  total_in_file: number;
+};
+
+// ─── Workplan 2: latent observations and effects ─────────────────────────────
+
+export type LatentTagId =
+  | "social.sociopetal_seating"
+  | "social.shared_attention_anchor"
+  | "social.interactional_visibility"
+  | "spatial.prospect"
+  | "social.chance_encounter_potential"
+  | "social.disengagement_ease";
+
+export type EffectDomain =
+  | "cognitive"
+  | "affective"
+  | "behavioral"
+  | "social"
+  | "physiological"
+  | "neural"
+  | "health";
+
+export type LatentObservation = {
+  image_id: number;
+  image_set_id: number | null;
+  science_run_id: number | null;
+  tag_id: LatentTagId | string;
+  label: string;
+  value: number; // 0..4 ordinal
+  value_type: "ordinal";
+  confidence: number; // 0..1
+  evidence: Record<string, unknown>;
+  detector_version: string;
+};
+
+export type LinkedEffect = {
+  tag_id: LatentTagId | string;
+  domain: EffectDomain;
+  mechanism: string;
+};
+
+export type LatentRunSummary = {
+  image_set_id: number;
+  queued: number;
+  running: number;
+  completed: number;
+  failed: number;
+  already_complete: number;
+};
+
+export type LatentDetectorStat = {
+  tag_id: LatentTagId | string;
+  mean_value: number;
+  pct_above_threshold: number;
+  mean_confidence: number;
+  n_observations: number;
+};
+
+export type LatentDistributionWarning = {
+  tag_id: LatentTagId | string;
+  code:
+    | "all_identical"
+    | "skew_high"
+    | "skew_low"
+    | "low_confidence";
+  message: string;
+};
+
+export type LatentStatusResponse = {
+  image_set_id: number;
+  total_images: number;
+  images_with_all_six: number;
+  failures: number;
+  threshold: number;
+  by_detector: LatentDetectorStat[];
+  warnings: LatentDistributionWarning[];
+};
+
+export type WorkbenchLatentAssignment = {
+  image: ImageDetail;
+  latent: {
+    tag_id: LatentTagId | string;
+    label: string;
+    value: number;
+    value_type: "ordinal";
+    confidence: number;
+    evidence: Record<string, unknown>;
+    detector_version: string;
+  };
+};
+
+export type LatentValidationSubmit = {
+  image_id: number;
+  tag_id: LatentTagId | string;
+  value: number;
+  duration_ms: number;
 };
 
 export type ExplorerSearchResponse = {
@@ -90,6 +245,19 @@ export type ExplorerSearchResponse = {
   total: number;
   page: number;
   page_size: number;
+};
+
+export type ExplorerSearchParams = {
+  q?: string;
+  page?: number;
+  page_size?: number;
+  room_type?: string;
+  tag?: string;
+  // Workplan 2 filters
+  image_set?: string;
+  latent_tag?: LatentTagId | string;
+  effect_domain?: EffectDomain | string;
+  min_value?: number;
 };
 
 export type VelocityPoint = {

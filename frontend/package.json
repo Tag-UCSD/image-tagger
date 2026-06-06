@@ -17,7 +17,8 @@
     "dev:all": "concurrently \"npm run dev:workbench\" \"npm run dev:monitor\" \"npm run dev:admin\" \"npm run dev:explorer\"",
     "build": "npm run build -w apps/workbench && npm run build -w apps/monitor && npm run build -w apps/admin && npm run build -w apps/explorer",
     "preview": "node preview.mjs",
-    "test:responsive": "playwright test tests/responsive.spec.ts"
+    "test:responsive": "playwright test tests/responsive.spec.ts",
+    "test:wp2": "playwright test tests/workplan2.spec.ts"
   },
   "dependencies": {
     "lucide-react": "^0.292.0",
