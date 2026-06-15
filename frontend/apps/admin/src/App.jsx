@@ -128,7 +128,7 @@ function NoTokenView() {
                 <h2 className="text-base font-semibold text-gray-900">Demo access not configured</h2>
                 <p className="text-sm text-gray-600 max-w-sm">
                     Set{' '}
-                    <code className="bg-gray-100 px-1 rounded text-xs">VITE_DEMO_ADMIN_JWT</code>{' '}
+                    <code className="bg-gray-100 px-1 rounded text-xs">VITE_DEMO_TOKEN</code>{' '}
                     in your <code className="bg-gray-100 px-1 rounded text-xs">.env</code> file to
                     enable live admin access.
                 </p>

@@ -121,7 +121,7 @@ function NoTokenView() {
       <ShieldOff size={40} className="text-amber-500" />
       <h2 className="text-base font-semibold text-gray-900">Demo access not configured</h2>
       <p className="text-sm text-gray-600 max-w-sm">
-        Set <code className="bg-gray-100 px-1 rounded text-xs">VITE_DEMO_TAGGER_JWT</code> in your{' '}
+        Set <code className="bg-gray-100 px-1 rounded text-xs">VITE_DEMO_TOKEN</code> in your{' '}
         <code className="bg-gray-100 px-1 rounded text-xs">.env</code> file to enable live workbench access.
       </p>
     </div>
