@@ -88,6 +88,11 @@ class Settings(BaseSettings):
     # deployments where Supabase JWT rotation is not desired.
     demo_token: Optional[str] = Field(default=None)
 
+    # Full open-access demo mode — if true, all protected routes return a
+    # hardcoded admin user with no token required. Set DEMO_MODE=true in
+    # Render for a zero-config public demo.
+    demo_mode: bool = Field(default=False)
+
     # Deferred in Phase 1 (see PLAN_BACKEND_PHASE1.md Task A-10).
     sentry_dsn: Optional[str] = Field(default=None)
 

@@ -60,10 +60,6 @@ export default function MonitorApp() {
     }, []);
 
     useEffect(() => {
-        if (!USE_MOCKS && !demoAccess.hasSupervisorToken()) {
-            setAppState('no-token');
-            return;
-        }
         loadData();
     }, [loadData]);
 

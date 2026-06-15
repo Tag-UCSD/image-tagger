@@ -34,10 +34,6 @@ export default function AdminApp() {
     }, []);
 
     useEffect(() => {
-        if (!USE_MOCKS && !demoAccess.hasAdminToken()) {
-            setAppState('no-token');
-            return;
-        }
         loadData();
     }, [loadData]);
 

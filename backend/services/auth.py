@@ -142,6 +142,9 @@ def get_current_user(
     development-only ``dev_bypass_<role>`` shortcut, and otherwise
     HS256-verifies the token against ``SUPABASE_JWT_SECRET``.
     """
+    if settings.demo_mode:
+        return CurrentUser(id="demo:admin", role="admin")  # type: ignore[arg-type]
+
     if creds is None or not creds.credentials:
         raise _unauthorized()
 

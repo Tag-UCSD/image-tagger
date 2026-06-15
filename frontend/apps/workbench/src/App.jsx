@@ -41,10 +41,6 @@ export default function WorkbenchApp() {
   }, []);
 
   useEffect(() => {
-    if (!USE_MOCKS && !demoAccess.hasTaggerToken()) {
-      setAppState('no-token');
-      return;
-    }
     loadNext();
   }, [loadNext]);
 
