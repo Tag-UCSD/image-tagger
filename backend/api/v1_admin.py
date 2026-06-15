@@ -484,18 +484,26 @@ async def upload_images(
             )
 
         unique_name = f"{uuid4().hex}{suffix}"
-        dest = root / unique_name
-        dest.write_bytes(content)
+
+        # Try Supabase Storage first (persistent); fall back to local disk.
+        from backend.services.supabase_storage import upload_to_supabase
+        public_url = upload_to_supabase(unique_name, content, suffix)
+        if public_url:
+            resolved_storage_path = public_url
+        else:
+            dest = root / unique_name
+            dest.write_bytes(content)
+            resolved_storage_path = unique_name
 
         image = Image(
             filename=original_name,
-            storage_path=unique_name,
+            storage_path=resolved_storage_path,
             meta_data={"source": "admin_upload"},
         )
         db.add(image)
         db.flush()
         created_ids.append(image.id)
-        storage_paths.append(str(dest))
+        storage_paths.append(resolved_storage_path)
         original_names.append(original_name)
 
     if not created_ids:
