@@ -83,6 +83,11 @@ class Settings(BaseSettings):
     # Kept here only so no literal default leaks into backend/services/auth.py.
     api_secret: Optional[str] = Field(default=None)
 
+    # Static demo token — if set, any bearer matching this value is accepted
+    # as an admin user on all protected routes. Intended for permanent demo
+    # deployments where Supabase JWT rotation is not desired.
+    demo_token: Optional[str] = Field(default=None)
+
     # Deferred in Phase 1 (see PLAN_BACKEND_PHASE1.md Task A-10).
     sentry_dsn: Optional[str] = Field(default=None)
 

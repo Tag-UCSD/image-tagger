@@ -93,6 +93,21 @@ def _decode_jwt(token: str) -> dict:
         raise _unauthorized() from exc
 
 
+def _maybe_demo_token(token: str) -> Optional[CurrentUser]:
+    """Accept the configured DEMO_TOKEN as a permanent admin credential.
+
+    Activates only when ``DEMO_TOKEN`` is set in the environment. Returns
+    ``None`` when unset so the caller falls through to JWT verification.
+    """
+    demo = settings.demo_token
+    if not demo:
+        return None
+    if token != demo:
+        return None
+    logger.info("auth.demo_token_used")
+    return CurrentUser(id="demo:admin", role="admin")  # type: ignore[arg-type]
+
+
 def _maybe_dev_bypass(token: str) -> Optional[CurrentUser]:
     """Return a ``CurrentUser`` when the dev-bypass token convention applies.
 
@@ -133,6 +148,10 @@ def get_current_user(
     token = creds.credentials.strip()
     if not token:
         raise _unauthorized()
+
+    demo = _maybe_demo_token(token)
+    if demo is not None:
+        return demo
 
     bypass = _maybe_dev_bypass(token)
     if bypass is not None:

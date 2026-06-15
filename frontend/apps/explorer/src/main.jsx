@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-import { ToastProvider, MaintenanceOverlay, explorer, workbench, monitor, admin, demoAccess } from '@shared';
+import { ToastProvider, MaintenanceOverlay, DemoPasswordGate, explorer, workbench, monitor, admin, demoAccess } from '@shared';
 import '../../../index.css'
 
 if (import.meta.env.DEV) {
@@ -10,8 +10,10 @@ if (import.meta.env.DEV) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ToastProvider>
-      <MaintenanceOverlay />
-      <App />
+      <DemoPasswordGate>
+        <MaintenanceOverlay />
+        <App />
+      </DemoPasswordGate>
     </ToastProvider>
   </React.StrictMode>,
 )

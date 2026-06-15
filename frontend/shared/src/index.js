@@ -4,6 +4,7 @@ export { Header }       from './components/Header.jsx';
 export { Toggle }       from './components/Toggle.jsx';
 export { ToastProvider, useToast } from './components/Toast.jsx';
 export { MaintenanceOverlay }      from './components/MaintenanceOverlay.jsx';
+export { DemoPasswordGate }        from './components/DemoPasswordGate.jsx';
 export { Input }        from './components/Input.jsx';
 export { Select }       from './components/Select.jsx';
 export { Skeleton }     from './components/Skeleton.jsx';

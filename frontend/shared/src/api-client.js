@@ -223,17 +223,12 @@ function normalizeBudgetResponse(raw) {
   };
 }
 
-function getDemoToken(role) {
-  const map = {
-    admin: import.meta.env.VITE_DEMO_ADMIN_JWT,
-    tagger: import.meta.env.VITE_DEMO_TAGGER_JWT,
-    supervisor: import.meta.env.VITE_DEMO_SUPERVISOR_JWT,
-  };
-  return map[role] ?? null;
+function getDemoToken() {
+  return import.meta.env.VITE_DEMO_TOKEN ?? null;
 }
 
-function bearerHeaders(role) {
-  const token = getDemoToken(role);
+function bearerHeaders() {
+  const token = getDemoToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -979,7 +974,7 @@ export const workbench = {
       return typeMap[type] ?? mocks.nextNumber;
     }
     return liveFetch("/v1/workbench/next", {
-      headers: bearerHeaders("tagger"),
+      headers: bearerHeaders(),
     });
   },
 
@@ -993,7 +988,7 @@ export const workbench = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...bearerHeaders("tagger"),
+        ...bearerHeaders(),
       },
       body: JSON.stringify(body),
     });
@@ -1008,7 +1003,7 @@ export const workbench = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...bearerHeaders("tagger"),
+        ...bearerHeaders(),
       },
       body: JSON.stringify(body),
     });
@@ -1027,7 +1022,7 @@ export const workbench = {
       return mocks.nextLatent;
     }
     return liveFetch("/v1/workbench/latent/next", {
-      headers: bearerHeaders("tagger"),
+      headers: bearerHeaders(),
     });
   },
 };
@@ -1052,7 +1047,7 @@ export const monitor = {
       return mocks.velocityResponse;
     }
     return liveFetch(`/v1/monitor/velocity?window_hours=${window_hours}`, {
-      headers: bearerHeaders("supervisor"),
+      headers: bearerHeaders(),
     });
   },
 
@@ -1075,7 +1070,7 @@ export const monitor = {
       return mocks.irrResponse;
     }
     return liveFetch("/v1/monitor/irr", {
-      headers: bearerHeaders("supervisor"),
+      headers: bearerHeaders(),
     });
   },
 
@@ -1103,7 +1098,7 @@ export const monitor = {
     }
     return liveFetch(
       `/v1/monitor/image-sets/${encodeURIComponent(imageSetId)}/latent-status`,
-      { headers: bearerHeaders("supervisor") },
+      { headers: bearerHeaders() },
     );
   },
 };
@@ -1136,7 +1131,7 @@ export const admin = {
     return normalizeUploadResponse(
       await liveFetch("/v1/admin/upload", {
         method: "POST",
-        headers: bearerHeaders("admin"),
+        headers: bearerHeaders(),
         body: form,
       }),
       files.length,
@@ -1155,7 +1150,7 @@ export const admin = {
       return mocks.budgetResponse;
     }
     return normalizeBudgetResponse(
-      await liveFetch("/v1/admin/budget", { headers: bearerHeaders("admin") }),
+      await liveFetch("/v1/admin/budget", { headers: bearerHeaders() }),
     );
   },
 
@@ -1174,7 +1169,7 @@ export const admin = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...bearerHeaders("admin"),
+        ...bearerHeaders(),
       },
       body: JSON.stringify({ enabled }),
     });
@@ -1215,7 +1210,7 @@ export const admin = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...bearerHeaders("admin"),
+        ...bearerHeaders(),
       },
       body: JSON.stringify(manifest),
     });
@@ -1243,7 +1238,7 @@ export const admin = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...bearerHeaders("admin"),
+          ...bearerHeaders(),
         },
         body: JSON.stringify({}),
       },
@@ -1254,7 +1249,8 @@ export const admin = {
 // ─── Demo access helper ───────────────────────────────────────────────────────
 
 export const demoAccess = {
-  hasAdminToken: () => Boolean(import.meta.env.VITE_DEMO_ADMIN_JWT),
-  hasTaggerToken: () => Boolean(import.meta.env.VITE_DEMO_TAGGER_JWT),
-  hasSupervisorToken: () => Boolean(import.meta.env.VITE_DEMO_SUPERVISOR_JWT),
+  hasToken: () => Boolean(import.meta.env.VITE_DEMO_TOKEN),
+  hasAdminToken: () => Boolean(import.meta.env.VITE_DEMO_TOKEN),
+  hasTaggerToken: () => Boolean(import.meta.env.VITE_DEMO_TOKEN),
+  hasSupervisorToken: () => Boolean(import.meta.env.VITE_DEMO_TOKEN),
 };
